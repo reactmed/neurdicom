@@ -7,10 +7,11 @@ NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allo
 
 ## API
 - [Patients](docs/PatientEndpointDocs.md)
-- Studies
-- Series
-- Instances
-- Plugins
+- [Studies](docs/StudyEndpointDocs.md)
+- [Series](docs/SeriesEndpointDocs.md)
+- [Instances](docs/InstanceEndpointDocs.md)
+- [Plugins](docs/PluginsEndpointDocs.md)
+- [Users](docs/UsersEndpointDocs.md)
 
 ## Plugins
 
