@@ -38,3 +38,18 @@ Field "params" list all parameters which plugin expects. Each "params" field has
 ]
 ```
 Fields "isarray", "isnull" are boolearn or nullable. Nullable value are is considered as false.  
+Plugin should have a public "Plugin" class. "Plugin" class should have at least three of the following methods "init", "process" and "destory". Example of "Plugin" class is shown below:
+```python
+class Plugin:
+    def init(self):
+        print('Init method called')
+
+    def process(self, ds: Dataset = None, *args, **kwargs):
+        print('Hello,', kwargs['name'], '!')
+        return {
+            'greeting': 'Hello, %s!' % kwargs['name']
+        }
+
+    def destroy(self):
+        print('Destroy method called')
+```
