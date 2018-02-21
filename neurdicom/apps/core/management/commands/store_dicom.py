@@ -7,16 +7,16 @@ from apps.core.models import Patient, Instance
 class Command(BaseCommand):
     help = "Store DICOM files"
 
-    def _store(self, name, prefix='='):
+    def _store(self, name):
         if not os.path.exists(name):
             return
         if os.path.isfile(name) and (name.endswith('.dicom') or name.endswith('.dcm')):
             DicomSaver.save(name)
-            self.stdout.write('%s%s stored' % (prefix, name))
+            self.stdout.write('%s stored' % name)
         elif os.path.isdir(name):
             files = [os.path.join(name, f) for f in os.listdir(name)]
             for f in files:
-                self._store(f, prefix=prefix + '=')
+                self._store(f)
         return
 
     def add_arguments(self, parser: CommandParser):

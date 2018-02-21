@@ -7,19 +7,18 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.db.models import ForeignKey, OneToOneField, ManyToOneRel
 from django.utils.translation import ugettext_lazy as _
+from jsonfield import JSONField
 from pydicom import Dataset
-
-from apps.core.managers import StudyManager
 
 import uuid
 
 
 def image_file_path(instance, filename):
-    return os.path.join('instances', 'img_{0}.dcm'.format(str(uuid.uuid4())))
+    return os.path.join('instances', '{0}.dcm'.format(str(uuid.uuid4()).replace('-', '')))
 
 
 def plugin_file_path(plugin, filename):
-    return os.path.join('plugins', 'plugin_{0}.zip'.format(str(uuid.uuid4())))
+    return os.path.join('plugins', '{0}.zip'.format(str(uuid.uuid4()).replace('-', '')))
 
 
 # class User(AbstractBaseUser, PermissionsMixin):
@@ -179,7 +178,6 @@ class Study(DicomModel):
     class Meta:
         db_table = 'studies'
 
-    objects = StudyManager()
     study_instance_uid = models.CharField(verbose_name=_('Study Instance UID'), max_length=80, unique=True)
     study_id = models.CharField(verbose_name=_('Study ID'), max_length=100, blank=True, null=True)
     study_description = models.CharField(verbose_name=_('Study Description'), max_length=300, blank=True, null=True)
@@ -227,4 +225,5 @@ class Plugin(models.Model):
     author = models.CharField(verbose_name=_('Author'), max_length=100, blank=True, null=True)
     info = models.CharField(verbose_name=_('Information'), max_length=500, blank=True, null=True)
     docs = models.TextField(verbose_name=_('Documentation'), max_length=500, blank=True, null=True)
-    plugin = models.FileField(upload_to=plugin_file_path)
+    params = JSONField(verbose_name=_('Parameters'))
+    plugin = models.FileField(upload_to=plugin_file_path, null=True, blank=True)

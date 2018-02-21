@@ -1,4 +1,5 @@
 import importlib
+import json
 from zipfile import ZipFile
 
 import sys
@@ -103,3 +104,26 @@ class DicomProcessor:
         result = plugin_processor.process(ds, **params)
         plugin_processor.destroy()
         return result
+
+
+class PluginSaver:
+
+    @staticmethod
+    def save(plugin: Plugin = None, fp=None):
+        if plugin is None:
+            plugin = Plugin()
+        if isinstance(fp, str):
+            fp = open(fp, 'rb')
+        with ZipFile(fp) as plugin_archive:
+            archive_name = plugin_archive.filelist[0].filename
+            meta = plugin_archive.read(os.path.join(archive_name, 'META.json'))
+            plugin_meta = json.loads(meta)
+            plugin.name = plugin_meta['name']
+            plugin.author = plugin_meta['author']
+            plugin.version = plugin_meta['version']
+            plugin.info = plugin_meta['info']
+            plugin.docs = plugin_meta['docs']
+            plugin.params = plugin_meta['params']
+            plugin.plugin.save('', fp)
+            plugin.save()
+        return plugin

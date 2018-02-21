@@ -1,6 +1,4 @@
 from django.contrib.auth.base_user import BaseUserManager
-from django.db.models import Manager
-from pydicom import Dataset
 
 
 class UserManager(BaseUserManager):
@@ -30,9 +28,3 @@ class UserManager(BaseUserManager):
             raise ValueError('Superuser must have is_superuser=True.')
 
         return self._create_user(email, password, **extra_fields)
-
-
-class StudyManager(Manager):
-    def create_from_dataset(self, ds: Dataset):
-        study = self.model()
-        return study

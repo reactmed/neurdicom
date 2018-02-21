@@ -18,10 +18,13 @@ class StudySerializer(ModelSerializer):
 class SeriesSerializer(ModelSerializer):
     class Meta:
         model = Series
-        fields = ('id', 'series_instance_uid', 'series_number', 'modality')
+        fields = ('id', 'series_instance_uid', 'series_number', 'modality', 'patient_position', 'body_part_examined')
 
 
 class InstanceSerializer(ModelSerializer):
     class Meta:
         model = Instance
-        fields = ('id', 'sop_instance_uid', 'rows', 'columns')
+        fields = (
+            'id', 'sop_instance_uid', 'rows', 'columns', 'smallest_image_pixel_value', 'largest_image_pixel_value',
+            'color_space', 'pixel_aspect_ratio', 'pixel_spacing', 'photometric_interpretation', 'image'
+        )

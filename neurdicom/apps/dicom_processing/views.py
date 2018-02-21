@@ -8,16 +8,21 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView, ListAPIView
 from rest_framework.parsers import FileUploadParser, JSONParser
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from apps.core.models import Plugin, Instance
 from apps.core.utils import DicomProcessor
 
 
 class PluginSerializer(ModelSerializer):
+    params = SerializerMethodField()
+
+    def get_params(self, plugin: Plugin):
+        return dict(plugin.params)
+
     class Meta:
         model = Plugin
-        fields = ('id', 'author', 'name', 'version', 'info', 'docs', 'plugin')
+        fields = ('id', 'author', 'name', 'version', 'info', 'docs', 'params', 'plugin')
 
 
 class PluginsListAPIView(ListCreateAPIView):
@@ -37,6 +42,7 @@ class PluginsListAPIView(ListCreateAPIView):
             plugin.version = plugin_meta['version']
             plugin.info = plugin_meta['info']
             plugin.docs = plugin_meta['docs']
+            plugin.params = plugin_meta['params']
             plugin.plugin.save('', plugin_file)
             plugin.save()
             serializer = self.serializer_class(plugin)

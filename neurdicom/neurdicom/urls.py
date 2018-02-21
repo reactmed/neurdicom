@@ -15,13 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from django.conf.urls.static import static
 from apps.core.views import IndexView
+from neurdicom import settings
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls')),
-    path('api/', include('apps.dicom_processing.urls')),
-    path('api/', include('apps.dicom_ws.urls'))
-    # path('', IndexView.as_view())
-]
+                  path('admin/', admin.site.urls),
+                  path('api-auth/', include('rest_framework.urls')),
+                  path('api/', include('apps.dicom_processing.urls')),
+                  path('api/', include('apps.dicom_ws.urls'))
+                  # path('', IndexView.as_view())
+              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

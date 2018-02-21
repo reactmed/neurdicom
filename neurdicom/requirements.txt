@@ -4,13 +4,17 @@ cycler==0.10.0
 dipy==0.13.0
 Django==2.0.2
 djangorestframework==3.7.7
+djangorestframework-camel-case==0.2.0
 h5py==2.7.1
 html5lib==0.9999999
+jsonfield==2.0.2
 Markdown==2.6.11
 matplotlib==2.1.2
 nibabel==2.2.1
 numpy==1.14.0
+Pillow==5.0.0
 protobuf==3.5.1
+psycopg2==2.7.4
 pydicom==1.0.0
 pynetdicom3==0.1.0
 pyparsing==2.2.0
