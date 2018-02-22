@@ -62,6 +62,7 @@ TAGS_TO_FIELDS = {
     'StudyDescription': 'study_description',
     'StudyTime': 'study_time',
     'AccessionNumber': 'accession_number',
+    'ReferringPhysicianName': 'referring_physician_name',
 
     # Series
     'SeriesInstanceUID': 'series_instance_uid',
@@ -102,6 +103,7 @@ FIELDS_TO_TAG = {
     'study_description': 'StudyDescription',
     'study_time': 'StudyTime',
     'accession_number': 'AccessionNumber',
+    'referring_physician_name': 'ReferringPhysicianName',
 
     # Series
     'series_instance_uid': 'SeriesInstanceUID',
@@ -177,17 +179,21 @@ class Patient(DicomModel):
 class Study(DicomModel):
     class Meta:
         db_table = 'studies'
+        verbose_name_plural = 'Studies'
 
     study_instance_uid = models.CharField(verbose_name=_('Study Instance UID'), max_length=80, unique=True)
     study_id = models.CharField(verbose_name=_('Study ID'), max_length=100, blank=True, null=True)
     study_description = models.CharField(verbose_name=_('Study Description'), max_length=300, blank=True, null=True)
-    # referring_physician = models.CharField(verbose_name=_('Referring Physician'), max_length=100, blank=True, null=True)
+    referring_physician_name = models.CharField(verbose_name=_('Referring Physician'), max_length=100, blank=True,
+                                                null=True)
     patient = models.ForeignKey('core.Patient', related_name='studies', on_delete=models.CASCADE)
 
 
 class Series(DicomModel):
     class Meta:
         db_table = 'series'
+        verbose_name = 'Series'
+        verbose_name_plural = 'Series'
 
     series_instance_uid = models.CharField(verbose_name=_('Series Instance UID'), max_length=80, unique=True)
     modality = models.CharField(verbose_name=_('Modality'), max_length=80)
@@ -214,6 +220,7 @@ class Instance(DicomModel):
     pixel_aspect_ratio = models.CharField(verbose_name=_('Pixel Aspect Ratio'), max_length=30, blank=True, null=True)
     pixel_spacing = models.CharField(verbose_name=_('Pixel Spacing'), max_length=30, blank=True, null=True)
     image = models.FileField(upload_to=image_file_path)
+    series = models.ForeignKey('core.Series', related_name='instances', on_delete=models.CASCADE)
 
 
 class Plugin(models.Model):

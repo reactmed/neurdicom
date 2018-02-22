@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'apps.core',
-    'apps.dicom_ws'
+    'apps.dicom_ws',
+    'apps.dicom_processing'
 ]
 
 MIDDLEWARE = [

@@ -24,8 +24,8 @@ class DicomSaver:
         elif Series.objects.filter(series_instance_uid=ds.SeriesInstanceUID).exists():
             series = Series.objects.get(series_instance_uid=ds.SeriesInstanceUID)
             instance = Instance.from_dataset(ds=ds)
-            instance.image.save('', fp)
             instance.series = series
+            instance.image.save('', fp)
             instance.save()
             fp.close()
             return instance
@@ -35,8 +35,8 @@ class DicomSaver:
             series.study = study
             series.save()
             instance = Instance.from_dataset(ds=ds)
-            instance.image.save('', fp)
             instance.series = series
+            instance.image.save('', fp)
             instance.save()
             fp.close()
             return instance
@@ -51,8 +51,8 @@ class DicomSaver:
             series.study = study
             series.save()
             instance = Instance.from_dataset(ds=ds)
-            instance.image.save('', fp)
             instance.series = series
+            instance.image.save('', fp)
             instance.save()
             fp.close()
             return instance
@@ -65,8 +65,8 @@ class DicomSaver:
             series.study = study
             series.save()
             instance = Instance.from_dataset(ds=ds)
-            instance.image.save('', fp)
             instance.series = series
+            instance.image.save('', fp)
             instance.save()
             fp.close()
             return instance
@@ -80,8 +80,8 @@ class DicomSaver:
             series.study = study
             series.save()
             instance = Instance.from_dataset(ds=ds)
-            instance.image.save('', fp)
             instance.series = series
+            instance.image.save('', fp)
             instance.save()
             fp.close()
             return instance
