@@ -1,0 +1,125 @@
+const PATIENTS_ROOT_URL = '/api/patients';
+const STUDIES_ROOT_URL = '/api/studies';
+const SERIES_ROOT_URL = '/api/series';
+const INSTANCES_ROOT_URL = '/api/instance';
+
+export default class DicomService {
+    static findPatients(f) {
+        fetch(
+            PATIENTS_ROOT_URL
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+
+    static findStudies(f) {
+        fetch(
+            STUDIES_ROOT_URL
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+
+    static findStudyById(studyId, f) {
+        fetch(
+            `${STUDIES_ROOT_URL}/${studyId}`
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+
+    static findSeries(f) {
+        fetch(
+            SERIES_ROOT_URL
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+
+    static findInstances(f) {
+        fetch(
+            INSTANCES_ROOT_URL
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+
+    static findStudiesByPatientId(patientId, f) {
+        fetch(
+            `${PATIENTS_ROOT_URL}/${patientId}/studies`
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+
+    static findSeriesByStudyId(studyId, f) {
+        fetch(
+            `${STUDIES_ROOT_URL}/${studyId}/series`
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+}

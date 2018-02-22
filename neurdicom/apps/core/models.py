@@ -114,6 +114,7 @@ FIELDS_TO_TAG = {
     'series_number': 'SeriesNumber',
     'patient_position': 'PatientPosition',
     'body_part_examined': 'BodyPartExamined',
+    'protocol_name': 'ProtocolName',
 
     # Instance
     'sop_instance_uid': 'SOPInstanceUID',
@@ -196,6 +197,7 @@ class Series(DicomModel):
         verbose_name_plural = 'Series'
 
     series_instance_uid = models.CharField(verbose_name=_('Series Instance UID'), max_length=80, unique=True)
+    protocol_name = models.CharField(verbose_name=_('Protocol Name'), max_length=150, blank=True, null=True)
     modality = models.CharField(verbose_name=_('Modality'), max_length=80)
     series_number = models.CharField(verbose_name=_('Series Number'), max_length=80, blank=True, null=True)
     patient_position = models.CharField(verbose_name=_('Patient Position'), max_length=30)
