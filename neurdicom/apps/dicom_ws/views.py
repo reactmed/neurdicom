@@ -10,16 +10,49 @@ from rest_framework.response import Response
 
 from apps.core.utils import DicomSaver
 from apps.dicom_ws.serializers import *
+from django.db.models import Q
+from djangorestframework_camel_case.render import CamelCaseJSONRenderer
+import re
+
+SEARCH_PARAM_RE = re.compile('(exact|startswith|endswith|contains)\s*=\s*((\w|\s|_|\^|-|\d)+)')
+DATE_SEARCH_PARAM_RE = re.compile('((from=)|(to=))')
 
 
 class PatientDetailAPIView(RetrieveDestroyAPIView):
-    queryset = Patient.objects.all()
     serializer_class = PatientSerializer
+    queryset = Patient.objects.all()
 
 
 class PatientListAPIView(ListAPIView):
-    queryset = Patient.objects.all()
     serializer_class = PatientSerializer
+
+    def get_queryset(self):
+        patient_name = self.request.query_params.get('patient_name', None)
+        patient_id = self.request.query_params.get('patient_id', None)
+        filters = []
+        matcher = SEARCH_PARAM_RE.match(patient_name or '')
+        if matcher:
+            search_param = matcher.group(1)
+            patient_name = matcher.group(2)
+            q_params = {
+                'patient_name__' + search_param: patient_name
+            }
+            filters.append(Q(**q_params))
+        matcher = SEARCH_PARAM_RE.match(patient_id or '')
+        if matcher:
+            search_param = matcher.group(1)
+            patient_name = matcher.group(2)
+            q_params = {
+                'patient_id__' + search_param: patient_name
+            }
+            filters.append(Q(**q_params))
+        if len(filters) == 0:
+            return Patient.objects.all()
+        else:
+            or_q = filters[0]
+            for filter_q in filters:
+                or_q |= filter_q
+            return Patient.objects.filter(or_q)
 
 
 class PatientStudiesAPIView(ListAPIView):
@@ -74,6 +107,14 @@ class InstanceListAPIView(ListCreateAPIView):
             instances.append(DicomSaver.save(dicom_file))
         serializer = InstanceSerializer(instances, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SeriesInstanceListAPIView(ListAPIView):
+    serializer_class = InstanceSerializer
+
+    def get_queryset(self):
+        series_id = self.kwargs['pk']
+        return Instance.objects.filter(series_id=series_id)
 
 
 def get_instance_image(request, pk):

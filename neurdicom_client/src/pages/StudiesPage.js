@@ -32,7 +32,7 @@ export default class StudiesPage extends Component {
         this.setState.bind(this);
     }
 
-    componentDidMount() {
+    componentWillMount() {
         StudiesService.findStudies(studyList => {
             console.log(studyList);
             this.setState({studies: studyList})

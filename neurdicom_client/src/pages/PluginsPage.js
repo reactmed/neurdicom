@@ -28,7 +28,7 @@ class PluginsPage extends Component {
         this.setState.bind(this);
     }
 
-    componentDidMount() {
+    componentWillMount() {
         PluginsService.findPlugins(plugins => {
             this.setState({plugins: plugins});
         });

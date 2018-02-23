@@ -1,12 +1,14 @@
+import * as queryString from 'query-string';
+
 const PATIENTS_ROOT_URL = '/api/patients';
 const STUDIES_ROOT_URL = '/api/studies';
 const SERIES_ROOT_URL = '/api/series';
 const INSTANCES_ROOT_URL = '/api/instance';
 
 export default class DicomService {
-    static findPatients(f) {
+    static findPatients(f, params = {}) {
         fetch(
-            PATIENTS_ROOT_URL
+            `${PATIENTS_ROOT_URL}?${queryString.stringify(params)}`
         ).then(function (response) {
             if (response.status >= 200 && response.status < 300) {
                 return response;
@@ -109,6 +111,23 @@ export default class DicomService {
     static findSeriesByStudyId(studyId, f) {
         fetch(
             `${STUDIES_ROOT_URL}/${studyId}/series`
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+
+    static findInstancesBySeriesId(seriesId, f) {
+        fetch(
+            `${SERIES_ROOT_URL}/${seriesId}/instances`
         ).then(function (response) {
             if (response.status >= 200 && response.status < 300) {
                 return response;

@@ -34,7 +34,7 @@ export default class StudySeriesPage extends Component {
         this.setState.bind(this);
     }
 
-    componentDidMount() {
+    componentWillMount() {
         StudiesService.findStudyById(this.state.studyId, study => {
             this.setState({study: study})
         });
@@ -87,7 +87,7 @@ export default class StudySeriesPage extends Component {
                                             <div>
                                                 <Header as='h4' inverted color='yellow'
                                                         attached>
-                                                    <Link to=''>
+                                                    <Link to={`/series/${seriesItem['id']}`}>
                                                         {seriesItem['protocol_name']}
                                                     </Link>
                                                 </Header>

@@ -17,6 +17,7 @@ urlpatterns = [
     path('studies', StudyListAPIView.as_view()),
 
     # Series
+    path('series/<int:pk>/instances', SeriesInstanceListAPIView.as_view()),
     path('series/<int:pk>', SeriesDetailAPIView.as_view()),
     path('series', SeriesListAPIView.as_view()),
 
