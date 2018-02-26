@@ -23,6 +23,7 @@ urlpatterns = [
 
     # Instances
     path('instances/<int:pk>/image', get_instance_image),
+    path('instances/<int:pk>/tags', get_instance_tags),
     path('instances/<int:pk>', InstanceDetailAPIView.as_view()),
     path('instances', InstanceListAPIView.as_view())
 ]

@@ -1,10 +1,14 @@
 import importlib
 import json
+from json import JSONEncoder
 from zipfile import ZipFile
 
 import sys
-from pydicom import Dataset
+from pydicom import Dataset, Sequence
 from pydicom import read_file
+from pydicom.dataelem import PersonName
+from pydicom.multival import MultiValue
+from pydicom.valuerep import DA, DT, TM, DSfloat, DSdecimal, IS
 
 from apps.core.models import *
 
@@ -127,3 +131,32 @@ class PluginSaver:
             plugin.plugin.save('', fp)
             plugin.save()
         return plugin
+
+
+class DicomJsonEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, PersonName):
+            return obj.original_string
+        if isinstance(obj, MultiValue) or isinstance(obj, Sequence):
+            return_list = []
+            for value in obj:
+                return_list.append(self.default(value))
+            return return_list
+        if isinstance(obj, DA):
+            return '%d-%02d-%02d' % (obj.year, obj.month, obj.day)
+        if isinstance(obj, DT):
+            return '%d-%02d-%02d %02d:%02d:%02d' % (obj.year, obj.month, obj.day, obj.hour, obj.minute, obj.second)
+        if isinstance(obj, TM):
+            return '%02d:%02d:%02d' % (obj.hour, obj.minute, obj.second)
+        if isinstance(obj, DSfloat):
+            return str(obj)
+        if isinstance(obj, DSdecimal):
+            return str(obj)
+        if isinstance(obj, IS):
+            return obj.original_string or str(obj)
+        if isinstance(obj, Dataset):
+            child_tags = obj.dir()
+            return_dict = {}
+            for tag in child_tags:
+                return_dict[tag] = self.default(obj.data_element(tag).value)
+        return str(obj)

@@ -1,14 +1,20 @@
+import json
 from io import BytesIO
+from wsgiref.util import FileWrapper
 
 import numpy as np
 import pydicom as dicom
 from PIL import Image
-from django.http import HttpResponse
+from io import StringIO
+from django.http import HttpResponse, JsonResponse
+from pydicom import Sequence
+from pydicom.multival import MultiValue
 from rest_framework import status
 from rest_framework.generics import *
 from rest_framework.response import Response
+from skimage import exposure, img_as_ubyte
 
-from apps.core.utils import DicomSaver
+from apps.core.utils import DicomSaver, DicomJsonEncoder
 from apps.dicom_ws.serializers import *
 from django.db.models import Q
 from djangorestframework_camel_case.render import CamelCaseJSONRenderer
@@ -120,9 +126,35 @@ class SeriesInstanceListAPIView(ListAPIView):
 def get_instance_image(request, pk):
     instance = Instance.objects.get(pk=pk)
     ds = dicom.read_file(instance.image.path)
-    image = Image.fromarray(ds.pixel_array.astype(np.uint8))
+    pixel_array = ds.pixel_array
+    orig_shape = pixel_array.shape
+    flatten_img = pixel_array.reshape((-1))
+    img_min = min(flatten_img)
+    img_max = max(flatten_img)
+    np.floor_divide(flatten_img, (img_max - img_min + 1) / 256,
+                    out=flatten_img, casting='unsafe')
+    img = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
+    img = Image.fromarray(img)
     file = BytesIO()
-    image.save(file, format='jpeg')
-    response = HttpResponse(instance.image.file, content_type='application/dicom')
-    response['Content-Disposition'] = 'attachment; filename=%s' % instance.image.name
+    img.save(file, format='jpeg')
+    file.seek(0)
+    response = HttpResponse(file.read(), content_type='image/jpeg')
+    response['Content-Disposition'] = 'attachment; filename=%d.jpeg' % instance.id
+    return response
+
+
+def get_instance_tags(request, pk):
+    instance = Instance.objects.get(pk=pk)
+    ds = dicom.read_file(instance.image.path)
+    tags = {}
+    for tag_key in ds.dir():
+        tag = ds.data_element(tag_key)
+        if tag_key == 'PixelData':
+            continue
+        if not hasattr(tag, 'name') or not hasattr(tag, 'value'):
+            continue
+        tag_value = tag.value
+        tags[tag.name] = tag_value
+    dumped_json = json.dumps(tags, cls=DicomJsonEncoder)
+    response = HttpResponse(dumped_json, content_type='application/json')
     return response

@@ -8,6 +8,7 @@ import 'semantic-ui-css/semantic.css';
 import PatientsPage from "./pages/PatientsPages";
 import PluginsPage from "./pages/PluginsPage";
 import SeriesViewerPage from "./pages/SeriesViewerPage";
+import LoginPage from "./pages/LoginPage";
 
 ReactDOM.render(
     <BrowserRouter>
@@ -17,6 +18,7 @@ ReactDOM.render(
             <Route path='/studies/:id' component={StudySeriesPage}/>
             <Route path='/plugins' component={PluginsPage}/>
             <Route path='/series/:id' component={SeriesViewerPage}/>
+            <Route exact path='/' component={LoginPage}/>
         </div>
     </BrowserRouter>,
     document.getElementById('root')

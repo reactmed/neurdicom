@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {Link} from "react-router-dom";
-import {Button, Menu, Segment} from "semantic-ui-react";
+import {Button, Icon, Menu, Segment} from "semantic-ui-react";
 
 class MenuContainer extends Component {
     render() {
@@ -17,6 +17,12 @@ class MenuContainer extends Component {
                         </Menu.Item>
                         <Menu.Item>
                             <Button primary>Upload plugin</Button>
+                        </Menu.Item>
+                        <Menu.Item>
+                            <Button color={'red'}>
+                                <Icon name={'shutdown'}/>
+                                Log Out
+                            </Button>
                         </Menu.Item>
                     </Menu>
                 </Segment>
