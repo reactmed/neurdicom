@@ -58,3 +58,9 @@ class InstanceSerializer(ModelSerializer):
             'id', 'sop_instance_uid', 'rows', 'columns', 'smallest_image_pixel_value', 'largest_image_pixel_value',
             'color_space', 'pixel_aspect_ratio', 'pixel_spacing', 'photometric_interpretation', 'image'
         )
+
+
+class DicomNodeSerializer(ModelSerializer):
+    class Meta:
+        model = DicomNode
+        fields = ('id', 'name', 'aet_title', 'peer_aet_title', 'peer_host', 'peer_port')

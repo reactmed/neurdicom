@@ -76,6 +76,7 @@ TAGS_TO_FIELDS = {
 
     # Instance
     'SOPInstanceUID': 'sop_instance_uid',
+    'InstanceNumber': 'instance_number',
     'Rows': 'rows',
     'Columns': 'columns',
     'ColorSpace': 'color_space',
@@ -118,6 +119,7 @@ FIELDS_TO_TAG = {
 
     # Instance
     'sop_instance_uid': 'SOPInstanceUID',
+    'instance_number': 'InstanceNumber',
     'rows': 'Rows',
     'columns': 'Columns',
     'color_space': 'ColorSpace',
@@ -210,6 +212,7 @@ class Instance(DicomModel):
         db_table = 'instances'
 
     sop_instance_uid = models.CharField(verbose_name=_('SOP Instance UID'), max_length=80, unique=True)
+    instance_number = models.IntegerField(verbose_name=_('Instance Number'))
     rows = models.IntegerField(verbose_name=_('Rows'))
     columns = models.IntegerField(verbose_name=_('Columns'))
     color_space = models.CharField(verbose_name=_('Color Space'), max_length=30, blank=True, null=True)
@@ -234,5 +237,19 @@ class Plugin(models.Model):
     author = models.CharField(verbose_name=_('Author'), max_length=100, blank=True, null=True)
     info = models.CharField(verbose_name=_('Information'), max_length=500, blank=True, null=True)
     docs = models.TextField(verbose_name=_('Documentation'), max_length=500, blank=True, null=True)
-    params = JSONField(verbose_name=_('Parameters'))
+    modalities = JSONField(verbose_name=_('Modalities'), blank=True, null=True)
+    tags = JSONField(verbose_name=_('Tags'), blank=True, null=True)
+    params = JSONField(verbose_name=_('Parameters'), blank=True, null=True)
+    result = JSONField(verbose_name=_('Result'))
     plugin = models.FileField(upload_to=plugin_file_path, null=True, blank=True)
+
+
+class DicomNode(models.Model):
+    class Meta:
+        db_table = 'dicom_nodes'
+
+    name = models.CharField(verbose_name=_('Name'), max_length=255, blank=True, null=True)
+    aet_title = models.CharField(verbose_name=_('AET Title'), max_length=100)
+    peer_aet_title = models.CharField(verbose_name=_('Peer AET Title'), max_length=100)
+    peer_host = models.CharField(verbose_name=_('Peer Host'), max_length=100)
+    peer_port = models.IntegerField(verbose_name=_('Peer Port'))

@@ -120,7 +120,7 @@ class SeriesInstanceListAPIView(ListAPIView):
 
     def get_queryset(self):
         series_id = self.kwargs['pk']
-        return Instance.objects.filter(series_id=series_id)
+        return Instance.objects.filter(series_id=series_id).order_by('instance_number')
 
 
 def get_instance_image(request, pk):
@@ -158,3 +158,13 @@ def get_instance_tags(request, pk):
     dumped_json = json.dumps(tags, cls=DicomJsonEncoder)
     response = HttpResponse(dumped_json, content_type='application/json')
     return response
+
+
+class DicomNodeListAPIView(ListCreateAPIView):
+    queryset = DicomNode.objects.all()
+    serializer_class = DicomNodeSerializer
+
+
+class DicomNodeDetailAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = DicomNode.objects.all()
+    serializer_class = DicomNodeSerializer
