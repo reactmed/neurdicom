@@ -4,6 +4,10 @@ from json import JSONEncoder
 from zipfile import ZipFile
 
 import sys
+
+import numpy as np
+from PIL import Image
+from io import BytesIO
 from pydicom import Dataset, Sequence
 from pydicom import read_file
 from pydicom.dataelem import PersonName
@@ -127,7 +131,10 @@ class PluginSaver:
             plugin.version = plugin_meta['version']
             plugin.info = plugin_meta['info']
             plugin.docs = plugin_meta['docs']
-            plugin.params = plugin_meta['params']
+            plugin.params = plugin_meta.get('params', None)
+            plugin.result = plugin_meta['result']
+            plugin.tags = plugin_meta.get('tags', None)
+            plugin.modalities = plugin_meta.get('modalities', None)
             plugin.plugin.save('', fp)
             plugin.save()
         return plugin
@@ -159,4 +166,24 @@ class DicomJsonEncoder(JSONEncoder):
             return_dict = {}
             for tag in child_tags:
                 return_dict[tag] = self.default(obj.data_element(tag).value)
+            return return_dict
         return str(obj)
+
+
+def convert_dicom_to_img(ds: Dataset, img_format='jpeg'):
+    return convert_array_to_img(ds.pixel_array, img_format=img_format)
+
+
+def convert_array_to_img(pixel_array: np.ndarray, img_format='jpeg'):
+    orig_shape = pixel_array.shape
+    flatten_img = pixel_array.reshape((-1))
+    img_min = min(flatten_img)
+    img_max = max(flatten_img)
+    np.floor_divide(flatten_img, (img_max - img_min + 1) / 256,
+                    out=flatten_img, casting='unsafe')
+    img = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
+    img = Image.fromarray(img)
+    file = BytesIO()
+    img.save(file, format=img_format)
+    file.seek(0)
+    return file.read()
