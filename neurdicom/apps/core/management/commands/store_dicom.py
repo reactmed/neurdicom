@@ -21,14 +21,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: CommandParser):
         parser.add_argument('locations', nargs='+', type=str)
+        parser.add_argument('--clear', action='store_true', dest='clear',
+                            help='Clear database')
 
     def handle(self, *args, **options):
 
-        for instance in Instance.objects.all():
-            instance.image.delete()
-            instance.delete()
+        if options.get('clear', False):
+            self.stdout.write('Clear database')
+            for instance in Instance.objects.all():
+                instance.image.delete()
+                instance.delete()
+            Patient.objects.all().delete()
 
-        Patient.objects.all().delete()
         for name in options['locations']:
             self._store(name)
         self.stdout.write('Completed!')
