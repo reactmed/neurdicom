@@ -1,6 +1,6 @@
 # Patient Endpoint
 
-** Base URL: ** /api
+**Base URL:**/api
 
 | Resource  | Description  |
 | ------------ | ------------ |
