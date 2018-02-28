@@ -12,6 +12,8 @@ class MenuContainer extends Component {
                                    active={this.props.activeItem === 'patients'}/>
                         <Menu.Item as={Link} to='/studies' name='studies' active={this.props.activeItem === 'studies'}/>
                         <Menu.Item as={Link} to='/plugins' name='plugins' active={this.props.activeItem === 'plugins'}/>
+                        <Menu.Item as={Link} to='/dicom_nodes' name='DICOM nodes'
+                                   active={this.props.activeItem === 'DICOM nodes'}/>
                         <Menu.Item position='right'>
                             <Button primary>Upload DICOM</Button>
                         </Menu.Item>
