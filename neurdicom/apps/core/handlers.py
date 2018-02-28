@@ -1,6 +1,7 @@
 import json
 
-from pydicom import Dataset
+from pydicom import Dataset, Sequence
+from pydicom.multival import MultiValue
 from tornado.web import RequestHandler
 
 from apps.core.models import Patient, Instance
@@ -8,7 +9,20 @@ from apps.core.utils import DicomJsonEncoder, convert_dicom_to_img
 from apps.dicom_ws.serializers import PatientSerializer, InstanceSerializer
 
 
-class UrlSegmentDictHandler(RequestHandler):
+class BaseNeurDicomHandler(RequestHandler):
+
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+
+    def options(self, *args, **kwargs):
+        self.set_status(204)
+        self.finish()
+
+    def data_received(self, chunk):
+        pass
+
     expected_path_params = None
     path_params = None
 
@@ -20,7 +34,7 @@ class UrlSegmentDictHandler(RequestHandler):
                 }
 
 
-class BaseJsonHandler(UrlSegmentDictHandler):
+class BaseJsonHandler(BaseNeurDicomHandler):
     def prepare(self):
         super(BaseJsonHandler, self).prepare()
         if self.request.body:
@@ -31,6 +45,7 @@ class BaseJsonHandler(UrlSegmentDictHandler):
                 self.send_error(400, message='Body is not JSON deserializable')
 
     def set_default_headers(self):
+        super(BaseJsonHandler, self).set_default_headers()
         self.set_header('Content-Type', 'application/json')
         self.set_header('Server', 'NeurDICOM')
 
@@ -90,7 +105,7 @@ class ModelDetailHandler(BaseJsonHandler):
         self.write(serializer.data)
 
 
-class BaseDicomJsonHandler(RequestHandler):
+class BaseDicomJsonHandler(BaseNeurDicomHandler):
     def prepare(self):
         if self.request.body:
             try:
@@ -100,6 +115,7 @@ class BaseDicomJsonHandler(RequestHandler):
                 self.send_error(400, message='Body is not JSON deserializable')
 
     def set_default_headers(self):
+        super(BaseDicomJsonHandler, self).set_default_headers()
         self.set_header('Content-Type', 'application/json')
         self.set_header('Server', 'NeurDICOM')
 
@@ -114,6 +130,9 @@ class BaseDicomJsonHandler(RequestHandler):
                 if not hasattr(tag, 'name') or not hasattr(tag, 'value'):
                     continue
                 tag_value = tag.value
+                # Delete in future
+                if isinstance(tag_value, Sequence) or isinstance(tag_value, MultiValue) or isinstance(tag_value, dict):
+                    continue
                 tags[tag.name] = tag_value
             try:
                 response_json = json.dumps(tags, cls=DicomJsonEncoder)
@@ -124,8 +143,9 @@ class BaseDicomJsonHandler(RequestHandler):
             super(BaseDicomJsonHandler, self).write(chunk)
 
 
-class BaseDicomImageHandler(RequestHandler):
+class BaseDicomImageHandler(BaseNeurDicomHandler):
     def set_default_headers(self):
+        super(BaseDicomImageHandler, self).set_default_headers()
         self.set_header('Content-Type', 'image/jpeg')
         self.set_header('Server', 'NeurDICOM')
 
@@ -136,3 +156,5 @@ class BaseDicomImageHandler(RequestHandler):
             super(BaseDicomImageHandler, self).write(s)
         else:
             super(BaseDicomImageHandler, self).write(chunk)
+
+# class BaseMultipleTypeResponseHandler()

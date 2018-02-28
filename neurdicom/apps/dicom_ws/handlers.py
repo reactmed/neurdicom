@@ -4,9 +4,13 @@ from tornado import gen
 from apps.core.handlers import *
 from apps.core.models import *
 from apps.dicom_ws.serializers import *
+from apps.dicom_processing.views import PluginSerializer
+import pynetdicom3 as netdicom
+
+ECHO_SUCCESS = 0x0000
 
 
-class PatientListHandler(ModelListCreateHandler):
+class PatientListHandler(ModelListHandler):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
 
@@ -60,7 +64,7 @@ class SeriesInstancesHandler(ModelListHandler):
 
     @property
     def queryset(self):
-        return Instance.objects.filter(series_id=self.path_params['series_id'])
+        return Instance.objects.filter(series_id=self.path_params['series_id']).order_by('instance_number')
 
 
 class InstanceListHandler(ModelListHandler):
@@ -89,3 +93,40 @@ class InstanceImageHandler(BaseDicomImageHandler):
         instance = Instance.objects.get(pk=instance_id)
         ds = read_file(instance.image.path)
         yield self.write(ds)
+
+
+class DicomNodeListHandler(ModelListCreateHandler):
+    queryset = DicomNode.objects.all()
+    serializer_class = DicomNodeSerializer
+
+
+class DicomNodeDetailHandler(ModelDetailHandler):
+    queryset = DicomNode.objects.all()
+    serializer_class = DicomNodeSerializer
+
+
+class DicomNodeEchoHandler(BaseJsonHandler):
+    expected_path_params = ['dicom_node_id']
+
+    def get(self, *args, **kwargs):
+        dicom_node_id = self.path_params['dicom_node_id']
+        dicom_node = DicomNode.objects.get(pk=dicom_node_id)
+        ae = netdicom.AE(ae_title=dicom_node.aet_title, scu_sop_class=['1.2.840.10008.1.1'])
+        assoc = ae.associate(dicom_node.peer_host, dicom_node.peer_port, ae_title=dicom_node.peer_aet_title)
+        if assoc.is_established:
+            status = assoc.send_c_echo()
+            if status.Status == ECHO_SUCCESS:
+                self.set_status(200)
+                self.finish()
+                return
+        self.send_error(500, message='Echo failed')
+
+
+class PluginListHandler(ModelListCreateHandler):
+    queryset = Plugin.objects.all()
+    serializer_class = PluginSerializer
+
+
+class PluginDetailHandler(ModelDetailHandler):
+    queryset = Plugin.objects.all()
+    serializer_class = PluginSerializer

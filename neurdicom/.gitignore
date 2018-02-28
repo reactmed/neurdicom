@@ -197,3 +197,4 @@ pip-selfcheck.json
 node_modules
 media/
 *.sqlite3
+examples/orthanc/
