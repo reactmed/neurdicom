@@ -18,6 +18,7 @@ class SeriesViewerPage extends Component {
             seriesId: props.match.params.id,
             currentInstanceTags: {},
             currentInstanceId: 0,
+            currentInstance: {},
             tagsModalVisible: false,
             playTimerId: null
         };
@@ -98,7 +99,7 @@ class SeriesViewerPage extends Component {
             }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
                 <Menu inverted style={{borderRadius: '0px', marginBottom: '0px'}}>
                     <Menu.Item>
-                        <Button icon inverted onClick={() => {
+                        <Button size={'small'} icon inverted onClick={() => {
                             this.props.history.push('/studies')
                         }}>
                             <Icon name={'home'}/>
@@ -159,7 +160,30 @@ class SeriesViewerPage extends Component {
                 {
                     (instances && (instances.length > 0)) && (
                         <div style={{background: 'black'}}>
-                            <Image src={`/api/instances/${instances[currentInstanceId]['id']}/image`} centered/>
+                            <Grid columns='equal'>
+                                <Grid.Row>
+                                    <Grid.Column width={2}>
+                                        <b style={{color: 'yellow'}}>{`${instances[currentInstanceId].parent.patient['patient_name']}`}</b>
+                                        <br/>
+                                        <b style={{color: 'yellow'}}>{`${instances[currentInstanceId].parent.patient['patient_id']}`}</b>
+                                        <br/>
+                                        <b style={{color: 'yellow'}}>{`${instances[currentInstanceId].parent.study['study_date']}`}</b>
+                                    </Grid.Column>
+                                    <Grid.Column>
+                                        <Image src={`/api/instances/${instances[currentInstanceId]['id']}/image`}
+                                               centered/>
+                                    </Grid.Column>
+                                    <Grid.Column width={2}>
+                                        <b style={{color: 'yellow'}}>{`Instance ${instances[currentInstanceId]['instance_number']}`}</b>
+                                        <br/>
+                                        <b style={{color: 'yellow'}}>{`${instances[currentInstanceId].parent.series['modality']}`}</b>
+                                        <br/>
+                                        <b style={{color: 'yellow'}}>{`${instances[currentInstanceId]['rows']}x${instances[currentInstanceId]['columns']}`}</b>
+                                        <br/>
+                                        <b style={{color: 'yellow'}}>{instances[currentInstanceId]['photometric_interpretation']}</b>
+                                    </Grid.Column>
+                                </Grid.Row>
+                            </Grid>
                         </div>
                     )
                 }

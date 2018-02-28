@@ -198,3 +198,8 @@ node_modules
 media/
 *.sqlite3
 examples/orthanc/
+brain_cancer/
+.gitignore
+brain_extractor.zip
+dicom_pixels.zip
+dicom_tags.zip

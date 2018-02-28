@@ -31,6 +31,7 @@ INSTANCE_LIST_URL = r'/api/instances'
 INSTANCE_DETAIL_URL = r'/api/instances/(\d+)'
 INSTANCE_IMAGE_URL = r'/api/instances/(\d+)/image'
 INSTANCE_TAGS_URL = r'/api/instances/(\d+)/tags'
+INSTANCE_PROCESS_URL = r'/api/instances/(\d+)/process/by_plugin/(\d+)'
 
 DICOM_NODE_LIST_URL = r'/api/dicom_nodes'
 DICOM_NODE_DETAIL_URL = r'/api/dicom_nodes/(\d+)'
@@ -66,6 +67,7 @@ def main():
             (SERIES_LIST_URL, SeriesListHandler),
 
             # Instances
+            (INSTANCE_PROCESS_URL, InstanceProcessHandler),
             (INSTANCE_TAGS_URL, InstanceTagsHandler),
             (INSTANCE_IMAGE_URL, InstanceImageHandler),
             (INSTANCE_DETAIL_URL, InstanceDetailHandler),

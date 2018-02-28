@@ -77,8 +77,10 @@ class ModelListCreateHandler(BaseJsonHandler):
     def get(self, *args, **kwargs):
         if not self.queryset:
             self.send_error(500, message='Model queryset is not defined')
+            return
         if not self.serializer_class:
             self.send_error(500, message='Serializer class is not defined')
+            return
         serializer = self.serializer_class(self.queryset, many=True)
         self.write(serializer.data)
 

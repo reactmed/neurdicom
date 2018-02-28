@@ -3,6 +3,7 @@ from tornado import gen
 
 from apps.core.handlers import *
 from apps.core.models import *
+from apps.core.utils import DicomProcessor, convert_array_to_img
 from apps.dicom_ws.serializers import *
 from apps.dicom_processing.views import PluginSerializer
 import pynetdicom3 as netdicom
@@ -60,7 +61,7 @@ class SeriesDetailHandler(ModelDetailHandler):
 
 class SeriesInstancesHandler(ModelListHandler):
     expected_path_params = ['series_id']
-    serializer_class = InstanceSerializer
+    serializer_class = InstanceDetailSerializer
 
     @property
     def queryset(self):
@@ -74,7 +75,37 @@ class InstanceListHandler(ModelListHandler):
 
 class InstanceDetailHandler(ModelDetailHandler):
     queryset = Instance.objects.all()
-    serializer_class = InstanceSerializer
+    serializer_class = InstanceDetailSerializer
+
+
+class InstanceProcessHandler(BaseNeurDicomHandler):
+
+    def prepare(self):
+        super(BaseNeurDicomHandler, self).prepare()
+        if self.request.body:
+            try:
+                json_data = json.loads(self.request.body)
+                self.request.arguments.update(json_data)
+            except ValueError:
+                self.send_error(400, message='Body is not JSON deserializable')
+
+    @gen.coroutine
+    def post(self, instance_id, by_plugin_id, *args, **kwargs):
+        instance = Instance.objects.get(pk=instance_id)
+        params = self.request.arguments
+        plugin = Plugin.objects.get(pk=by_plugin_id)
+        result = DicomProcessor.process(instance, plugin, **params)
+        if plugin.result['type'] == 'IMAGE':
+            result = convert_array_to_img(result)
+            self.set_header('Content-Type', 'image/jpeg')
+            self.write(result)
+        elif plugin.result['type'] == 'JSON':
+            if isinstance(result, dict):
+                result = json.dumps(result)
+            self.set_header('Content-Type', 'application/json')
+            self.write(result)
+        else:
+            self.send_error(500, message='Unknown result type')
 
 
 class InstanceTagsHandler(BaseDicomJsonHandler):
