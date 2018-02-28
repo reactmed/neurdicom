@@ -186,6 +186,7 @@ class Study(DicomModel):
 
     study_instance_uid = models.CharField(verbose_name=_('Study Instance UID'), max_length=80, unique=True)
     study_id = models.CharField(verbose_name=_('Study ID'), max_length=100, blank=True, null=True)
+    study_date = models.DateField(verbose_name=_('Study Date'), blank=True, null=True)
     study_description = models.CharField(verbose_name=_('Study Description'), max_length=300, blank=True, null=True)
     referring_physician_name = models.CharField(verbose_name=_('Referring Physician'), max_length=100, blank=True,
                                                 null=True)

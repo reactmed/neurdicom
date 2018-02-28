@@ -1,9 +1,6 @@
+import json
 from json import JSONEncoder
 
-import numpy as np
-from io import BytesIO
-
-from PIL import Image
 from pydicom import Dataset, Sequence
 from pydicom.dataelem import PersonName
 from pydicom.multival import MultiValue
@@ -40,19 +37,24 @@ class DicomJsonEncoder(JSONEncoder):
         return str(obj)
 
 
-def convert_dicom_to_img(ds: Dataset, img_format='jpeg'):
-    return convert_array_to_img(ds.pixel_array, img_format=img_format)
+class Plugin:
+    def init(self):
+        print('Init method called')
 
+    def process(self, ds: Dataset = None, *args, **kwargs):
+        tags = {}
+        for tag_key in ds.dir():
+            tag = ds.data_element(tag_key)
+            if tag_key == 'PixelData':
+                continue
+            if not hasattr(tag, 'name') or not hasattr(tag, 'value'):
+                continue
+            tag_value = tag.value
+            # Delete in future
+            if isinstance(tag_value, Sequence) or isinstance(tag_value, MultiValue) or isinstance(tag_value, dict):
+                continue
+            tags[tag.name] = tag_value
+        return json.dumps(tags, cls=DicomJsonEncoder)
 
-def convert_array_to_img(pixel_array: np.ndarray, img_format='jpeg'):
-    orig_shape = pixel_array.shape
-    flatten_img = pixel_array.reshape((-1))
-    img_min = min(flatten_img)
-    img_max = max(flatten_img)
-    flatten_img = np.floor_divide(flatten_img, (img_max - img_min + 1) / 256, casting='unsafe')
-    img = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
-    img = Image.fromarray(img)
-    file = BytesIO()
-    img.save(file, format=img_format)
-    file.seek(0)
-    return file.getvalue()
+    def destroy(self):
+        print('Destroy method called')

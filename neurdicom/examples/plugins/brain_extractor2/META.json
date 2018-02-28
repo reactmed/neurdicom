@@ -1,0 +1,27 @@
+{
+  "author": "Roman Yarnykh",
+  "version": "1.0.0",
+  "info": "Extract brain from MRI",
+  "name": "brain_extractor",
+  "docs": "Extract brain from MRI",
+  "tags": [
+    "DICOM",
+    "Skull stripping"
+  ],
+  "modalities": [
+    "MR"
+  ],
+  "params": {
+    "media_radius": {
+      "type": "int"
+    },
+    "num_pass": {
+      "type": "int"
+    }
+  },
+  "result": {
+    "type": "IMAGE",
+    "bits": 16,
+    "color_space": "MONOCHROME"
+  }
+}

@@ -179,8 +179,7 @@ def convert_array_to_img(pixel_array: np.ndarray, img_format='jpeg'):
     flatten_img = pixel_array.reshape((-1))
     img_min = min(flatten_img)
     img_max = max(flatten_img)
-    np.floor_divide(flatten_img, (img_max - img_min + 1) / 256,
-                    out=flatten_img, casting='unsafe')
+    flatten_img = np.floor_divide(flatten_img, (img_max - img_min + 1) / 256, casting='unsafe')
     img = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
     img = Image.fromarray(img)
     file = BytesIO()

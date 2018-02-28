@@ -2,6 +2,9 @@ import MenuContainer from "../components/common/MenuContainer.component";
 import React, {Component} from "react";
 import PluginsService from "../services/PluginsService";
 import {Button, Divider, Dropdown, Form, Header, Message, Segment, Select} from "semantic-ui-react";
+import 'semantic-ui-css/semantic.min.css';
+import * as axios from 'axios';
+import FileSaver from 'file-save';
 
 const patientMatcherOptions = [
     {key: 'EXACT', text: 'Exact equals', value: 'EXACT'},
@@ -25,13 +28,20 @@ class PluginsPage extends Component {
         this.state = {
             plugins: []
         };
-        this.setState.bind(this);
+        this.setState = this.setState.bind(this);
+        this.downloadPlugin = this.downloadPlugin.bind(this);
     }
 
     componentWillMount() {
         PluginsService.findPlugins(plugins => {
             this.setState({plugins: plugins});
         });
+    }
+
+    downloadPlugin(pluginUrl) {
+        // axios.get(pluginUrl, {responseType: 'arraybuffer'}).then(response => {
+        //     FileSaver.saveAs(response.data, 'plugin.zip');
+        // })
     }
 
     render() {
@@ -71,7 +81,10 @@ class PluginsPage extends Component {
                                         <b>Info: </b>{plugin['info']}
                                         <Divider/>
                                         <div style={{textAlign: 'right'}}>
-                                            <Button positive>Download</Button>
+                                            <Button positive>
+                                                <a style={{color: 'white'}}
+                                                   href={`http://localhost:8080${plugin['plugin']}`}>Download</a>
+                                            </Button>
                                         </div>
                                     </Segment>
                                 )

@@ -56,8 +56,39 @@ class InstanceSerializer(ModelSerializer):
         model = Instance
         fields = (
             'id', 'sop_instance_uid', 'rows', 'columns', 'smallest_image_pixel_value', 'largest_image_pixel_value',
-            'color_space', 'pixel_aspect_ratio', 'pixel_spacing', 'photometric_interpretation', 'image'
+            'color_space', 'pixel_aspect_ratio', 'pixel_spacing', 'photometric_interpretation', 'image',
+            'instance_number'
         )
+
+
+class InstanceDetailSerializer(ModelSerializer):
+    parent = SerializerMethodField()
+
+    class Meta:
+        model = Instance
+        fields = (
+            'id', 'sop_instance_uid', 'rows', 'columns', 'smallest_image_pixel_value', 'largest_image_pixel_value',
+            'color_space', 'pixel_aspect_ratio', 'pixel_spacing', 'photometric_interpretation', 'image',
+            'instance_number', 'parent'
+        )
+
+    def get_parent(self, instance: Instance):
+        series = instance.series
+        study = series.study
+        patient = study.patient
+        parent = {
+            'patient': {
+                'patient_name': patient.patient_name,
+                'patient_id': patient.patient_id
+            },
+            'study': {
+                'study_date': str(study.study_date)
+            },
+            'series': {
+                'modality': series.modality
+            }
+        }
+        return parent
 
 
 class DicomNodeSerializer(ModelSerializer):

@@ -22,6 +22,8 @@ urlpatterns = [
     path('series', SeriesListAPIView.as_view()),
 
     # Instances
+    path('instances/<int:pk>/pixels/8bit', get_instance_8bit_pixels),
+    path('instances/<int:pk>/pixels', get_instance_pixels),
     path('instances/<int:pk>/image', get_instance_image),
     path('instances/<int:pk>/tags', get_instance_tags),
     path('instances/<int:pk>', InstanceDetailAPIView.as_view()),

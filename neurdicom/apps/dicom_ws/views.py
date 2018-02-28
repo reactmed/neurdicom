@@ -1,27 +1,24 @@
 import json
+import re
 from io import BytesIO
-from wsgiref.util import FileWrapper
 
 import numpy as np
 import pydicom as dicom
 from PIL import Image
-from io import StringIO
-from django.http import HttpResponse, JsonResponse
+from django.db.models import Q
+from django.http import HttpResponse
 from pydicom import Sequence
-from pydicom.multival import MultiValue
 from rest_framework import status
 from rest_framework.generics import *
 from rest_framework.response import Response
-from skimage import exposure, img_as_ubyte
 
 from apps.core.utils import DicomSaver, DicomJsonEncoder
 from apps.dicom_ws.serializers import *
-from django.db.models import Q
-from djangorestframework_camel_case.render import CamelCaseJSONRenderer
-import re
 
+# CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 SEARCH_PARAM_RE = re.compile('(exact|startswith|endswith|contains)\s*=\s*((\w|\s|_|\^|-|\d)+)')
 DATE_SEARCH_PARAM_RE = re.compile('((from=)|(to=))')
+IMG_MIME_TYPE_RE = re.compile('image/(jpeg|jpg|gif|png|tiff)')
 
 
 class PatientDetailAPIView(RetrieveDestroyAPIView):
@@ -123,9 +120,14 @@ class SeriesInstanceListAPIView(ListAPIView):
         return Instance.objects.filter(series_id=series_id).order_by('instance_number')
 
 
+# @cache_page(CACHE_TTL)
 def get_instance_image(request, pk):
     instance = Instance.objects.get(pk=pk)
     ds = dicom.read_file(instance.image.path)
+    accept_format = request.META.get('HTTP_ACCEPT', 'image/jpeg')
+    if not accept_format or not IMG_MIME_TYPE_RE.match(accept_format):
+        accept_format = 'image/jpeg'
+    accept_format = accept_format.replace('image/', '')
     pixel_array = ds.pixel_array
     orig_shape = pixel_array.shape
     flatten_img = pixel_array.reshape((-1))
@@ -136,7 +138,7 @@ def get_instance_image(request, pk):
     img = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
     img = Image.fromarray(img)
     file = BytesIO()
-    img.save(file, format='jpeg')
+    img.save(file, format=accept_format)
     file.seek(0)
     response = HttpResponse(file.read(), content_type='image/jpeg')
     response['Content-Disposition'] = 'attachment; filename=%d.jpeg' % instance.id
@@ -154,10 +156,35 @@ def get_instance_tags(request, pk):
         if not hasattr(tag, 'name') or not hasattr(tag, 'value'):
             continue
         tag_value = tag.value
+        # Временная мера - по мере рещения удалить
+        if isinstance(tag_value, Sequence):
+            continue
         tags[tag.name] = tag_value
     dumped_json = json.dumps(tags, cls=DicomJsonEncoder)
     response = HttpResponse(dumped_json, content_type='application/json')
     return response
+
+
+def get_instance_pixels(request, pk):
+    instance = Instance.objects.get(pk=pk)
+    ds = dicom.read_file(instance.image.path)
+    pixel_array = ds.pixel_array.tobytes()
+    return HttpResponse(pixel_array, content_type='application/octet-stream')
+
+
+def get_instance_8bit_pixels(request, pk):
+    instance = Instance.objects.get(pk=pk)
+    ds = dicom.read_file(instance.image.path)
+    pixel_array = ds.pixel_array
+    orig_shape = pixel_array.shape
+    flatten_img = pixel_array.reshape((-1))
+    img_min = min(flatten_img)
+    img_max = max(flatten_img)
+    np.floor_divide(flatten_img, (img_max - img_min + 1) / 256,
+                    out=flatten_img, casting='unsafe')
+    pixel_array = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
+    pixel_array = pixel_array.tobytes()
+    return HttpResponse(pixel_array, content_type='application/octet-stream')
 
 
 class DicomNodeListAPIView(ListCreateAPIView):

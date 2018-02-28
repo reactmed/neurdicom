@@ -82,13 +82,13 @@ export default class StudySeriesPage extends Component {
                                     </Form.Group>
                                 </Form>
                                 {
-                                    series.map(seriesItem => {
+                                    series.map((seriesItem, index) => {
                                         return (
                                             <div>
                                                 <Header as='h4' inverted color='yellow'
                                                         attached>
                                                     <Link to={`/series/${seriesItem['id']}`}>
-                                                        {seriesItem['protocol_name']}
+                                                        {seriesItem['protocol_name'] || `Series ${index + 1}`}
                                                     </Link>
                                                 </Header>
                                                 <Segment attached>
