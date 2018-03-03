@@ -2,6 +2,8 @@
 import os
 
 import django
+from tornado.iostream import StreamClosedError
+from tornado.tcpserver import TCPServer
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'neurdicom.settings'
 django.setup()
@@ -13,7 +15,7 @@ import tornado.ioloop
 import tornado.web
 import tornado.wsgi
 
-define('port', type=int, default=8080)
+define('rest_port', type=int, default=8080)
 
 PATIENT_LIST_URL = r'/api/patients'
 PATIENT_DETAIL_URL = r'/api/patients/(\d+)'
@@ -43,13 +45,25 @@ PLUGIN_DETAIL_URL = r'/api/plugins/(\d+)'
 MEDIA_URL = r'/media/(.*)'
 
 
+class EchoServer(TCPServer):
+    @gen.coroutine
+    def handle_stream(self, stream, address):
+        while True:
+            try:
+                data = yield stream.read_until(b"\n")
+                print('Chunk', data, 'was received from', address)
+                yield stream.write(data)
+            except StreamClosedError:
+                break
+
+
 def main():
     parse_command_line()
 
     # wsgi_app = get_wsgi_application()
     # container = tornado.wsgi.WSGIContainer(wsgi_app)
 
-    tornado_app = tornado.web.Application(
+    rest_app = tornado.web.Application(
         [
             # Patients
             (PATIENT_STUDIES_URL, PatientStudiesHandler),
@@ -86,10 +100,34 @@ def main():
             (MEDIA_URL, tornado.web.StaticFileHandler, {'path': 'media'})
         ])
 
-    server = tornado.httpserver.HTTPServer(tornado_app)
-    server.bind(options.port)
-    server.start(0)
-
+    # def on_c_echo():
+    #     return 0x0000
+    #
+    # def on_c_store(ds: Dataset):
+    #     pass
+    #
+    # ae = AE(ae_title='ORTHANC', port=4242, scp_sop_class=[VerificationSOPClass], transfer_syntax=[
+    #     ImplicitVRLittleEndian,
+    #     ExplicitVRLittleEndian,
+    #     DeflatedExplicitVRLittleEndian,
+    #     ExplicitVRBigEndian]
+    #         )
+    #
+    # ae.maximum_associations = 10
+    # ae.on_c_echo = on_c_echo
+    # ae.on_c_store = on_c_store
+    #
+    # # ae.start()
+    # # print('DICOM server started')
+    # # dicom_server = EchoServer()
+    # # dicom_server.bind(options.dicom_port)
+    # # dicom_server.start()
+    #
+    rest_server = tornado.httpserver.HTTPServer(rest_app)
+    rest_server.bind(options.rest_port)
+    rest_server.start()
+    print('HTTP server started')
+    #
     tornado.ioloop.IOLoop.current().start()
 
 

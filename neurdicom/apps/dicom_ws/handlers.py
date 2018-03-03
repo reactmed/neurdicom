@@ -11,17 +11,57 @@ import pynetdicom3 as netdicom
 ECHO_SUCCESS = 0x0000
 
 
-class PatientListHandler(ModelListHandler):
+class PatientListHandler(ListHandler):
+    """
+    Return all patients stored in database
+
+    Success
+
+    - 200 - All patients were found
+
+    Failure
+
+    - 401 - Not authorized user
+    - 403 - User has not permissions for retrieving patients
+
+    """
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
 
 
-class PatientDetailHandler(ModelDetailHandler):
+class PatientDetailHandler(RetrieveHandler):
+    """
+    Return patient by specified id
+
+    Success
+
+    - 200 - Found patient
+
+    Failure
+
+    - 404 - Patient not found with specified id
+    - 401 - Not authorized user
+    - 403 - User has not permissions for retrieving patients
+
+    """
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
 
 
-class PatientStudiesHandler(ModelListHandler):
+class PatientStudiesHandler(ListHandler):
+    """ Get patient's studies
+
+    Success
+
+    - 200 - All studies were found
+
+    Failure
+
+    - 404 - Patient not found with specified id
+    - 401 - Not authorized user
+    - 403 - User has not permissions for retrieving patients
+
+    """
     expected_path_params = ['patient_id']
     serializer_class = StudySerializer
 
@@ -30,17 +70,52 @@ class PatientStudiesHandler(ModelListHandler):
         return Study.objects.filter(patient_id=self.path_params['patient_id'])
 
 
-class StudyListHandler(ModelListHandler):
+class StudyListHandler(ListHandler):
+    """ Get studies
+
+    Success
+
+    - 200 - All studies were found
+
+    Failure
+
+    - 401 - Not authorized user
+    - 403 - User has not permissions for retrieving patients
+
+    """
     queryset = Study.objects.all()
     serializer_class = StudySerializer
 
 
-class StudyDetailHandler(ModelDetailHandler):
+class StudyDetailHandler(RetrieveDestroyHandler):
+    """ Find study by id
+
+    Success
+
+       - 200 - Study found
+
+    Failure
+
+       - 404 - Not found
+       - 401 - Not authorized user
+       - 403 - User has not permissions for retrieving patients
+    """
     queryset = Study.objects.all()
     serializer_class = StudySerializer
 
 
-class StudySeriesHandler(ModelListHandler):
+class StudySeriesHandler(ListHandler):
+    """ Find series by study
+
+    Success
+
+       - 200 - All series were found
+
+    Failure
+
+       - 401 - Not authorized user
+       - 403 - User has not permissions for retrieving patients
+    """
     expected_path_params = ['study_id']
     serializer_class = SeriesSerializer
 
@@ -49,17 +124,51 @@ class StudySeriesHandler(ModelListHandler):
         return Series.objects.filter(study_id=self.path_params['study_id'])
 
 
-class SeriesListHandler(ModelListHandler):
+class SeriesListHandler(ListHandler):
+    """ Find series
+
+    Success
+
+        - 200 - All series were found
+
+    Failure
+
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Series.objects.all()
     serializer_class = SeriesSerializer
 
 
-class SeriesDetailHandler(ModelDetailHandler):
+class SeriesDetailHandler(RetrieveHandler):
+    """ Find series by id
+
+    Success
+
+        - 200 - Series was found
+
+    Failure
+
+        - 404 - Series not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Series.objects.all()
     serializer_class = SeriesSerializer
 
 
-class SeriesInstancesHandler(ModelListHandler):
+class SeriesInstancesHandler(ListHandler):
+    """ Find instances by series
+
+    Success
+
+        - 200 - All instances were found
+
+    Failure
+
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     expected_path_params = ['series_id']
     serializer_class = InstanceDetailSerializer
 
@@ -68,17 +177,51 @@ class SeriesInstancesHandler(ModelListHandler):
         return Instance.objects.filter(series_id=self.path_params['series_id']).order_by('instance_number')
 
 
-class InstanceListHandler(ModelListHandler):
+class InstanceListHandler(ListHandler):
+    """ Find instances
+
+    Success
+
+        - 200 - All instances were found
+
+    Failure
+
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Instance.objects.all()
     serializer_class = InstanceSerializer
 
 
-class InstanceDetailHandler(ModelDetailHandler):
+class InstanceDetailHandler(RetrieveHandler):
+    """ Find instance by id
+
+    Success
+
+        - 200 - Instance was found
+
+    Failure
+        - 404 - Instance not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Instance.objects.all()
     serializer_class = InstanceDetailSerializer
 
 
 class InstanceProcessHandler(BaseNeurDicomHandler):
+    """ Process an instances with specified plugin (or filter)
+
+    Success
+
+        - 200 - OK
+
+    Failure
+        - 404 - Instance or plugin were not found
+        - 500 - Process error
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
 
     def prepare(self):
         super(BaseNeurDicomHandler, self).prepare()
@@ -109,6 +252,17 @@ class InstanceProcessHandler(BaseNeurDicomHandler):
 
 
 class InstanceTagsHandler(BaseDicomJsonHandler):
+    """ Find instance tags
+
+    Success
+
+        - 200 - Tags found
+
+    Failure
+        - 404 - Instance not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
 
     @gen.coroutine
     def get(self, instance_id, *args, **kwargs):
@@ -118,6 +272,17 @@ class InstanceTagsHandler(BaseDicomJsonHandler):
 
 
 class InstanceImageHandler(BaseDicomImageHandler):
+    """ Find instance image
+
+    Success
+
+        - 200 - Instance image was found
+
+    Failure
+        - 404 - Instance not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
 
     @gen.coroutine
     def get(self, instance_id, *args, **kwargs):
@@ -126,17 +291,50 @@ class InstanceImageHandler(BaseDicomImageHandler):
         yield self.write(ds)
 
 
-class DicomNodeListHandler(ModelListCreateHandler):
+class DicomNodeListHandler(ListCreateHandler):
+    """ Find DICOM nodes
+
+    Success
+
+        - 200 - All nodes found
+
+    Failure
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = DicomNode.objects.all()
     serializer_class = DicomNodeSerializer
 
 
-class DicomNodeDetailHandler(ModelDetailHandler):
+class DicomNodeDetailHandler(RetrieveHandler):
+    """ Find DICOM node by id
+
+    Success
+
+        - 200 - All nodes found
+
+    Failure
+        - 404 - DICOM node not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = DicomNode.objects.all()
     serializer_class = DicomNodeSerializer
 
 
 class DicomNodeEchoHandler(BaseJsonHandler):
+    """ Make ECHO request to DICOM node
+
+    Success
+
+        - 200 - ECHO succeeded
+
+    Failure
+        - 404 - DICOM node not found
+        - 500 - ECHO failed
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     expected_path_params = ['dicom_node_id']
 
     def get(self, *args, **kwargs):
@@ -153,11 +351,32 @@ class DicomNodeEchoHandler(BaseJsonHandler):
         self.send_error(500, message='Echo failed')
 
 
-class PluginListHandler(ModelListCreateHandler):
+class PluginListHandler(ListCreateHandler):
+    """ Find plugins
+
+    Success
+
+        - 200 - Plugins were found
+
+    Failure
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Plugin.objects.all()
     serializer_class = PluginSerializer
 
 
-class PluginDetailHandler(ModelDetailHandler):
+class PluginDetailHandler(RetrieveUpdateDestroyHandler):
+    """ Find plugin by id
+
+    Success
+
+        - 200 - Plugins were found
+
+    Failure
+        - 404 - Plugin not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Plugin.objects.all()
     serializer_class = PluginSerializer
