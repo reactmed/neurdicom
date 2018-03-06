@@ -100,17 +100,19 @@ class DicomProcessor:
     @staticmethod
     def process(instance: Instance, plugin: Plugin, **params):
         ds = read_file(instance.image)
-        sys.path.append(plugin.plugin.path)
+        plugin_path = plugin.plugin.path
+        sys.path.append(plugin_path)
+        importlib.invalidate_caches()
         with ZipFile(plugin.plugin) as zip_file:
             module_name = zip_file.filelist[0].filename
             module_name = module_name.replace('/', '').replace('\\', '')
-        plugin_module = __import__(module_name, fromlist=['Plugin'])
+        plugin_module = importlib.import_module(module_name)
         importlib.reload(plugin_module)
-        plugin_class = getattr(plugin_module, 'Plugin')
-        plugin_processor = plugin_class()
+        plugin_processor = plugin_module.Plugin()
         plugin_processor.init()
         result = plugin_processor.process(ds, **params)
         plugin_processor.destroy()
+        sys.path.remove(plugin_path)
         return result
 
 

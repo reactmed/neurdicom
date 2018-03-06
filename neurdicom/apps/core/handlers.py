@@ -155,6 +155,7 @@ class BaseJsonHandler(BaseNeurDicomHandler):
     """
     Serialize result as JSON
     """
+
     def prepare(self):
         super(BaseJsonHandler, self).prepare()
         if self.request.body:
@@ -181,6 +182,7 @@ class BaseDicomJsonHandler(BaseNeurDicomHandler):
     """
     Extract tags from DICOM file and serialize them into JSON
     """
+
     def prepare(self):
         if self.request.body:
             try:
@@ -222,6 +224,7 @@ class BaseDicomImageHandler(BaseNeurDicomHandler):
     """
     Extract image from DICOM and write as response
     """
+
     def set_default_headers(self):
         super(BaseDicomImageHandler, self).set_default_headers()
         self.set_header('Content-Type', 'image/jpeg')
@@ -243,13 +246,13 @@ class ListHandlerMixin(BaseJsonHandler):
     queryset = None
     serializer_class = None
 
-    @render_exception(exception_renders=(default_exception_render,))
+    # @render_exception(exception_renders=(default_exception_render,))
     def get(self, *args, **kwargs):
         if not self.queryset:
             self.send_error(500, message='Model queryset is not defined')
         if not self.serializer_class:
             self.send_error(500, message='Serializer class is not defined')
-        serializer = self.serializer_class(self.queryset.all())
+        serializer = self.serializer_class(self.queryset.all(), many=True)
         self.write(serializer.data)
 
 
@@ -259,7 +262,7 @@ class CreateHandlerMixin(BaseJsonHandler):
     """
     serializer_class = None
 
-    @render_exception(exception_renders=(default_exception_render,))
+    # @render_exception(exception_renders=(default_exception_render,))
     def post(self, *args, **kwargs):
         serializer = self.serializer_class(data=self.request.arguments)
         if serializer.is_valid():
@@ -277,7 +280,7 @@ class RetrieveHandlerMixin(BaseJsonHandler):
     queryset = None
     serializer_class = None
 
-    @render_exception(exception_renders=(object_does_not_exist_render,))
+    # @render_exception(exception_renders=(object_does_not_exist_render,))
     def get(self, instance_id, *args, **kwargs):
         if not self.queryset:
             self.send_error(500, message='Model queryset is not defined')
@@ -294,7 +297,7 @@ class UpdateHandlerMixin(BaseJsonHandler):
     queryset = None
     serializer_class = None
 
-    @render_exception(exception_renders=(default_exception_render,))
+    # @render_exception(exception_renders=(default_exception_render,))
     def put(self, instance_id, *args, **kwargs):
         if not self.queryset:
             self.send_error(500, message='Model queryset is not defined')
@@ -318,7 +321,7 @@ class DestroyHandlerMixin(BaseJsonHandler):
     """
     queryset = None
 
-    @render_exception(exception_renders=(object_does_not_exist_render,))
+    # @render_exception(exception_renders=(object_does_not_exist_render,))
     def delete(self, instance_id, *args, **kwargs):
         if not self.queryset:
             self.send_error(500, message='Model queryset is not defined')

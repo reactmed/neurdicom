@@ -13,7 +13,7 @@ class PatientSerializer(ModelSerializer):
                   'images_count')
 
     def get_images_count(self, patient: Patient):
-        return Instance.objects.filter(series__study__patient_id=patient.id).count()
+        return Instance.objects.filter(series__study__patient__id=patient.id).count()
 
 
 class SeriesSerializer(ModelSerializer):
