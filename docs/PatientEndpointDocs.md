@@ -1,4 +1,4 @@
-# Patient Endpoint
+# Patient endpoint
 
 **Base URL:** /api
 
