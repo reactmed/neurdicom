@@ -1,4 +1,4 @@
-# Series Endpoint
+# Series endpoint
 
 **Base URL:** /api
 
