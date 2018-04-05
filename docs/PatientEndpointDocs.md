@@ -9,6 +9,9 @@
 | GET /patients/:id/studies  | Find studies for patient  |
 
 ## :green_book: GET /patients
+Find all patients
+
+**Request body** 
 
 ## :green_book: GET /patients/:id
 
