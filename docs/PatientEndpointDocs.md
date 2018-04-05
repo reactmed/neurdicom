@@ -8,12 +8,12 @@
 | GET /patients/:id  | Find patient by id  |
 | GET /patients/:id/studies  | Find studies for patient  |
 
-## :red_circle: GET /patients
+## :green_book: GET /patients
 
-## :red_circle: GET /patients/:id
+## :green_book: GET /patients/:id
 
-## :red_circle: GET /patients/:id/studies
+## :green_book: GET /patients/:id/studies
 
-## :red_circle: PUT /patients
+## :green_book: PUT /patients
 
-## :red_circle: DELETE /patients/:id
+## :green_book: DELETE /patients/:id
