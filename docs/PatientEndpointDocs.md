@@ -9,14 +9,16 @@
 | GET /patients/:id/studies  | Find studies for patient  |
 
 ## :green_book: GET /patients
-Find all patients
-
-**Request body** 
+**Description**: Find all patients
 
 ## :green_book: GET /patients/:id
+**Description**: Find patient by id
 
 ## :green_book: GET /patients/:id/studies
+**Description**: Find patient's studies
 
 ## :green_book: PUT /patients
+**Description**: Update patient
 
 ## :green_book: DELETE /patients/:id
+**Description**: Delete patient
