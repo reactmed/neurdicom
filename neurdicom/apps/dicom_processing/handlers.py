@@ -6,10 +6,10 @@ from apps.core.utils import DicomProcessor, convert_array_to_img
 
 class DicomProcessorHandler(BaseJsonHandler):
 
-    def post(self, instance_id, plugin_id, *args, **kwargs):
+    def get(self, instance_id, plugin_id, *args, **kwargs):
         instance = Instance.objects.get(pk=instance_id)
         plugin = Plugin.objects.get(pk=plugin_id)
-        result = DicomProcessor.process(instance, plugin, **self.request.arguments)
+        result = DicomProcessor.process(instance, plugin, **self.request.query_parameters)
         if plugin.result['type'] == 'IMAGE':
             result = convert_array_to_img(result)
             self.set_header('Content-Type', 'image/jpeg')

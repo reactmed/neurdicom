@@ -220,9 +220,16 @@ class BaseDicomJsonHandler(BaseNeurDicomHandler):
             super(BaseDicomJsonHandler, self).write(chunk)
 
 
+class BaseBytesHandler(BaseNeurDicomHandler):
+    def set_default_headers(self):
+        super(BaseNeurDicomHandler, self).set_default_headers()
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Server', 'NeurDICOM')
+
+
 class BaseDicomImageHandler(BaseNeurDicomHandler):
     """
-    Extract image from DICOM and write as response
+    Extract image from DICOM, convert to usual image format and write as response
     """
 
     def set_default_headers(self):

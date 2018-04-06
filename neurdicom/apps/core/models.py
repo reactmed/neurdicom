@@ -21,6 +21,10 @@ def plugin_file_path(plugin, filename):
     return os.path.join('plugins', '{0}.zip'.format(str(uuid.uuid4()).replace('-', '')))
 
 
+def processed_image_path(plugin, filename):
+    return os.path.join('plugins', '{0}.zip'.format(str(uuid.uuid4()).replace('-', '')))
+
+
 # class User(AbstractBaseUser, PermissionsMixin):
 #     email = models.CharField(verbose_name=_('Email'), max_length=30, unique=True)
 #     name = models.CharField(verbose_name=_('Имя'), max_length=30)
@@ -254,3 +258,13 @@ class DicomNode(models.Model):
     peer_aet_title = models.CharField(verbose_name=_('Peer AET Title'), max_length=100)
     peer_host = models.CharField(verbose_name=_('Peer Host'), max_length=100)
     peer_port = models.IntegerField(verbose_name=_('Peer Port'))
+
+
+class ProcessingResult(models.Model):
+    class Meta:
+        db_table = 'processing_results'
+
+    expire_date = models.DateTimeField()
+    image = models.FileField(upload_to=processed_image_path, verbose_name=_('Image'), null=True, blank=True)
+    json = JSONField(verbose_name=_('JSON'))
+    session_token = models.CharField(max_length=255)

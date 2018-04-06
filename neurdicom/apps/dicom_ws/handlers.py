@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from pydicom import read_file
 from tornado import gen
 
@@ -11,6 +13,7 @@ import pynetdicom3 as netdicom
 ECHO_SUCCESS = 0x0000
 
 
+# GET /api/patients
 class PatientListHandler(ListHandler):
     """
     Return all patients stored in database
@@ -29,6 +32,7 @@ class PatientListHandler(ListHandler):
     serializer_class = PatientSerializer
 
 
+# GET /api/patients/:id
 class PatientDetailHandler(RetrieveHandler):
     """
     Return patient by specified id
@@ -48,6 +52,7 @@ class PatientDetailHandler(RetrieveHandler):
     serializer_class = PatientSerializer
 
 
+# GET /api/patients/:id/studies
 class PatientStudiesHandler(ListHandler):
     """ Get patient's studies
 
@@ -70,6 +75,7 @@ class PatientStudiesHandler(ListHandler):
         return Study.objects.filter(patient_id=self.path_params['patient_id'])
 
 
+# GET /api/studies
 class StudyListHandler(ListHandler):
     """ Get studies
 
@@ -87,6 +93,7 @@ class StudyListHandler(ListHandler):
     serializer_class = StudySerializer
 
 
+# GET /api/studies/:id
 class StudyDetailHandler(RetrieveDestroyHandler):
     """ Find study by id
 
@@ -104,6 +111,7 @@ class StudyDetailHandler(RetrieveDestroyHandler):
     serializer_class = StudySerializer
 
 
+# GET /api/studies/:id/series
 class StudySeriesHandler(ListHandler):
     """ Find series by study
 
@@ -124,6 +132,7 @@ class StudySeriesHandler(ListHandler):
         return Series.objects.filter(study_id=self.path_params['study_id'])
 
 
+# GET /api/series
 class SeriesListHandler(ListHandler):
     """ Find series
 
@@ -140,6 +149,7 @@ class SeriesListHandler(ListHandler):
     serializer_class = SeriesSerializer
 
 
+# GET /api/series/:id
 class SeriesDetailHandler(RetrieveHandler):
     """ Find series by id
 
@@ -157,6 +167,7 @@ class SeriesDetailHandler(RetrieveHandler):
     serializer_class = SeriesSerializer
 
 
+# GET /api/series/:id/instances
 class SeriesInstancesHandler(ListHandler):
     """ Find instances by series
 
@@ -177,6 +188,7 @@ class SeriesInstancesHandler(ListHandler):
         return Instance.objects.filter(series_id=self.path_params['series_id']).order_by('instance_number')
 
 
+# GET /api/instances
 class InstanceListHandler(ListHandler):
     """ Find instances
 
@@ -193,6 +205,7 @@ class InstanceListHandler(ListHandler):
     serializer_class = InstanceSerializer
 
 
+# GET /api/instances/:id
 class InstanceDetailHandler(RetrieveHandler):
     """ Find instance by id
 
@@ -208,6 +221,8 @@ class InstanceDetailHandler(RetrieveHandler):
     queryset = Instance.objects.all()
     serializer_class = InstanceDetailSerializer
 
+
+# POST /api/instances/:id/process/by_plugin/:id
 
 class InstanceProcessHandler(BaseNeurDicomHandler):
     """ Process an instances with specified plugin (or filter)
@@ -232,14 +247,34 @@ class InstanceProcessHandler(BaseNeurDicomHandler):
             except ValueError:
                 self.send_error(400, message='Body is not JSON deserializable')
 
+    def _convert(self, v, t):
+        if t == 'int':
+            return int(v)
+        else:
+            return float(v)
+
     @gen.coroutine
-    def post(self, instance_id, by_plugin_id, *args, **kwargs):
+    def get(self, instance_id, by_plugin_id, *args, **kwargs):
         instance = Instance.objects.get(pk=instance_id)
-        params = self.request.arguments
         plugin = Plugin.objects.get(pk=by_plugin_id)
+        params = {}
+        for k in plugin.params:
+            if plugin.params[k].get('is_array', False):
+                v = self.get_query_arguments(k, None)
+            else:
+                v = self.get_query_argument(k, None)
+            if v is not None:
+                if isinstance(v, list) or isinstance(v, tuple):
+                    params[k] = [self._convert(item, plugin.params[k]['type']) for item in v]
+                else:
+                    params[k] = self._convert(v, plugin.params[k]['type'])
+
         result = DicomProcessor.process(instance, plugin, **params)
         if plugin.result['type'] == 'IMAGE':
-            result = convert_array_to_img(result)
+            if isinstance(result, BytesIO):
+                result = result.getvalue()
+            else:
+                result = convert_array_to_img(result)
             self.set_header('Content-Type', 'image/jpeg')
             self.write(result)
         elif plugin.result['type'] == 'JSON':
@@ -251,6 +286,7 @@ class InstanceProcessHandler(BaseNeurDicomHandler):
             self.send_error(500, message='Unknown result type')
 
 
+# GET /api/instances/:id/tags
 class InstanceTagsHandler(BaseDicomJsonHandler):
     """ Find instance tags
 
@@ -271,6 +307,7 @@ class InstanceTagsHandler(BaseDicomJsonHandler):
         yield self.write(ds)
 
 
+# GET /api/instances/:id/image
 class InstanceImageHandler(BaseDicomImageHandler):
     """ Find instance image
 
@@ -281,7 +318,7 @@ class InstanceImageHandler(BaseDicomImageHandler):
     Failure
         - 404 - Instance not found
         - 401 - Not authorized user
-        - 403 - User has not permissions for retrieving patients
+        - 403 - User has not permissions for retrieving instances
     """
 
     @gen.coroutine
@@ -291,6 +328,27 @@ class InstanceImageHandler(BaseDicomImageHandler):
         yield self.write(ds)
 
 
+# GET /api/instances/:id/raw
+class InstanceRawHandler(BaseBytesHandler):
+    """ Find instance image
+
+        Success
+
+            - 200 - Instance image was found
+
+        Failure
+            - 404 - Instance not found
+            - 401 - Not authorized user
+            - 403 - User has not permissions for retrieving instances
+    """
+
+    @gen.coroutine
+    def get(self, instance_id, *args, **kwargs):
+        instance = Instance.objects.get(pk=instance_id)
+        yield self.write(read_file(instance.image).PixelData)
+
+
+# GET /api/dicom_nodes
 class DicomNodeListHandler(ListCreateHandler):
     """ Find DICOM nodes
 
@@ -306,6 +364,7 @@ class DicomNodeListHandler(ListCreateHandler):
     serializer_class = DicomNodeSerializer
 
 
+# GET /api/dicom_nodes/:id
 class DicomNodeDetailHandler(RetrieveHandler):
     """ Find DICOM node by id
 
@@ -322,6 +381,7 @@ class DicomNodeDetailHandler(RetrieveHandler):
     serializer_class = DicomNodeSerializer
 
 
+# GET /api/dicom_nodes/:id/echo
 class DicomNodeEchoHandler(BaseJsonHandler):
     """ Make ECHO request to DICOM node
 
@@ -351,6 +411,7 @@ class DicomNodeEchoHandler(BaseJsonHandler):
         self.send_error(500, message='Echo failed')
 
 
+# GET /api/plugins
 class PluginListHandler(ListCreateHandler):
     """ Find plugins
 
@@ -366,7 +427,8 @@ class PluginListHandler(ListCreateHandler):
     serializer_class = PluginSerializer
 
 
-class PluginDetailHandler(RetrieveUpdateDestroyHandler):
+# GET /api/plugins/:id
+class PluginDetailHandler(RetrieveDestroyHandler):
     """ Find plugin by id
 
     Success

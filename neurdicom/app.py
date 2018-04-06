@@ -32,6 +32,7 @@ SERIES_INSTANCES_URL = r'/api/series/(\d+)/instances'
 INSTANCE_LIST_URL = r'/api/instances'
 INSTANCE_DETAIL_URL = r'/api/instances/(\d+)'
 INSTANCE_IMAGE_URL = r'/api/instances/(\d+)/image'
+INSTANCE_RAW_URL = r'/api/instances/(\d+)/raw'
 INSTANCE_TAGS_URL = r'/api/instances/(\d+)/tags'
 INSTANCE_PROCESS_URL = r'/api/instances/(\d+)/process/by_plugin/(\d+)'
 
@@ -84,6 +85,7 @@ def main():
             (INSTANCE_PROCESS_URL, InstanceProcessHandler),
             (INSTANCE_TAGS_URL, InstanceTagsHandler),
             (INSTANCE_IMAGE_URL, InstanceImageHandler),
+            (INSTANCE_RAW_URL, InstanceRawHandler),
             (INSTANCE_DETAIL_URL, InstanceDetailHandler),
             (INSTANCE_LIST_URL, InstanceListHandler),
 
@@ -125,7 +127,7 @@ def main():
     #
     rest_server = tornado.httpserver.HTTPServer(rest_app)
     rest_server.bind(options.rest_port)
-    rest_server.start()
+    rest_server.start(0)
     print('HTTP server started')
     #
     tornado.ioloop.IOLoop.current().start()
