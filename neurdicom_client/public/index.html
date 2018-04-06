@@ -30,6 +30,10 @@
                         modelViewMatrix *
                         vec4(position,1.0);
     }
+
+
+
+
 </script>
 <script id="mainFrag" type="x-shader/x-fragment">
     uniform sampler2D texture;
@@ -39,7 +43,47 @@
     void main() {
         gl_FragColor = texture2D(texture, vUv);
     }
+
+
+
+
 </script>
+
+<script id="heatmapFrag" type="x-shader/x-fragment">
+    uniform sampler2D texture;
+
+    varying vec2 vUv;
+
+    void main() {
+        vec4 t = texture2D(texture, vUv);
+        gl_FragColor = vec4(clamp(vec3(1.5) - abs(4.0 * vec3(t) + vec3(-3, -2, -1)), vec3(0), vec3(1)), 1.0);
+    }
+
+</script>
+
+<script id="hotGreenFrag" type="x-shader/x-fragment">
+    uniform sampler2D texture;
+
+    varying vec2 vUv;
+
+    void main() {
+        vec4 t = texture2D(texture, vUv);
+        gl_FragColor = vec4(0.0, t.g, 0.0, 1.0);
+    }
+
+</script>
+
+<script id="hotRedFrag" type="x-shader/x-fragment">
+    uniform sampler2D texture;
+
+    varying vec2 vUv;
+
+    void main() {
+        vec4 t = texture2D(texture, vUv);
+        gl_FragColor = vec4(t.r, 0.0, 0.0, 1.0);
+    }
+</script>
+
 <div id="root" style="height: 100%; min-height: 300px; min-width: 1000px;"></div>
 <script>
 

@@ -27,7 +27,8 @@ class DicomViewer extends Component {
         window.addEventListener('resize', this.onWindowResize, false);
 
         const vertShader = document.getElementById('mainVert').textContent;
-        const fragShader = document.getElementById('mainFrag').textContent;
+        console.log(this.props.colorScale);
+        const fragShader = document.getElementById(this.props.colorScale + 'Frag').textContent;
         new THREE.TextureLoader().load(url, (texture) => {
             const uniforms = {
                 texture: {
@@ -57,7 +58,7 @@ class DicomViewer extends Component {
     componentDidUpdate() {
         const url = this.props.url;
         const vertShader = document.getElementById('mainVert').textContent;
-        const fragShader = document.getElementById('mainFrag').textContent;
+        const fragShader = document.getElementById(this.props.colorScale + 'Frag').textContent;
         new THREE.TextureLoader().load(url, (texture) => {
             const uniforms = {
                 texture: {

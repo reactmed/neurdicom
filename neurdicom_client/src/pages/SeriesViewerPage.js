@@ -5,6 +5,7 @@ import {
 import DicomService from "../services/DicomService";
 import PluginModal from "../components/common/PluginModal";
 import DicomViewer from "../components/common/DicomViewer";
+import Dropdown from "semantic-ui-react/dist/es/modules/Dropdown/Dropdown";
 
 class SeriesViewerPage extends Component {
     constructor(props) {
@@ -18,7 +19,8 @@ class SeriesViewerPage extends Component {
             tagsModalVisible: false,
             playTimerId: null,
             isLoaded: false,
-            rotation: null
+            rotation: null,
+            colorScale: 'main'
         };
         this.setState = this.setState.bind(this);
         this.prevInstance = this.prevInstance.bind(this);
@@ -29,6 +31,7 @@ class SeriesViewerPage extends Component {
         this.stop = this.stop.bind(this);
         this.rotateLeft = this.rotateLeft.bind(this);
         this.rotateRight = this.rotateRight.bind(this);
+        this.setColorScale = this.setColorScale.bind(this);
     }
 
     componentWillMount() {
@@ -96,7 +99,33 @@ class SeriesViewerPage extends Component {
         this.setState({rotation: 'right'});
     }
 
+    setColorScale(e, d) {
+        this.setState({colorScale: d.value})
+    }
+
     render() {
+        const colorScaleOptions = [
+            {
+                'key': 'main',
+                'value': 'main',
+                'text': 'Original'
+            },
+            {
+                'key': 'heatmap',
+                'value': 'heatmap',
+                'text': 'Heatmap'
+            },
+            {
+                'key': 'hotGreen',
+                'value': 'hotGreen',
+                'text': 'Hot Green'
+            },
+            {
+                'key': 'hotRed',
+                'value': 'hotRed',
+                'text': 'Hot Red'
+            }
+        ];
         const instances = this.state.instances;
         if (instances && instances.length > 0) {
             const instanceIndex = this.state.instanceIndex;
@@ -167,13 +196,17 @@ class SeriesViewerPage extends Component {
                                 </Modal.Content>
                             </Modal>
                         </Menu.Item>
+                        <Menu.Item>
+                            <Dropdown placeholder='Color scale' fluid search selection options={colorScaleOptions}
+                                      onChange={this.setColorScale}/>
+                        </Menu.Item>
                         <Menu.Item position={'right'}>
                             <Button icon inverted onClick={this.nextInstance}>
                                 <Icon name={'arrow right'}/>
                             </Button>
                         </Menu.Item>
                     </Menu>
-                    <DicomViewer url={url} rotation={this.state.rotation}/>
+                    <DicomViewer url={url} rotation={this.state.rotation} colorScale={this.state.colorScale}/>
                 </div>
             );
         }
