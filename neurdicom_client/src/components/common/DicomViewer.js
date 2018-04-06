@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import * as THREE from 'three';
+import './DicomViewer.css';
 
 class DicomViewer extends Component {
     constructor(props) {
@@ -79,8 +80,34 @@ class DicomViewer extends Component {
     }
 
     render() {
+        const instance = this.props.instances[this.props.index];
+        console.log(instance);
         return (
             <div ref={node => this.node = node} style={{height: window.innerHeight}}>
+                <div className={'leftTop'}>
+                    <div>
+                        Patient ID: {instance.parent.patient['patient_id']}
+                    </div>
+                    <div>
+                        Patient Name: {instance.parent.patient['patient_name']}
+                    </div>
+                    <div>
+                        Series ID: {instance.parent.series['series_id']}
+                    </div>
+                    <br/>
+                    <div>
+                        Instance: {instance['instance_number']}
+                    </div>
+                    <div>
+                        Modality: {instance.parent.series['modality']}
+                    </div>
+                    <div>
+                        Size: {instance['columns']}x{instance['rows']}
+                    </div>
+                    <div>
+                        Color Scheme: {instance['photometric_interpretation']}
+                    </div>
+                </div>
             </div>
         )
     }
