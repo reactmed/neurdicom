@@ -1,11 +1,12 @@
 import React, {Component} from 'react';
 import {
-    Button, Icon, Menu, Modal
+    Button, Grid, Icon, Menu, Modal
 } from "semantic-ui-react";
 import DicomService from "../services/DicomService";
-import PluginModal from "../components/common/PluginModal";
 import DicomViewer from "../components/common/DicomViewer";
 import Dropdown from "semantic-ui-react/dist/es/modules/Dropdown/Dropdown";
+import DicomControlPanel from "../components/seriesViewerPage/DicomControlPanel";
+
 
 class SeriesViewerPage extends Component {
     constructor(props) {
@@ -13,14 +14,17 @@ class SeriesViewerPage extends Component {
         this.state = {
             instances: [],
             seriesId: props.match.params.id,
-            currentInstanceTags: {},
-            instanceIndex: 0,
-            currentInstance: {},
-            tagsModalVisible: false,
+            instanceTags: {},
+            index: 0,
+            instance: {},
+            showTags: false,
             playTimerId: null,
             isLoaded: false,
             rotation: null,
-            colorScale: 'main'
+            colorScale: 'main',
+            animation: false,
+            viewMode: 'one',
+            animationId: undefined
         };
         this.setState = this.setState.bind(this);
         this.prevInstance = this.prevInstance.bind(this);
@@ -32,10 +36,10 @@ class SeriesViewerPage extends Component {
         this.rotateLeft = this.rotateLeft.bind(this);
         this.rotateRight = this.rotateRight.bind(this);
         this.setColorScale = this.setColorScale.bind(this);
+        this.setViewMode = this.setViewMode.bind(this);
     }
 
     componentWillMount() {
-        console.log('WILL MOUNT');
         const seriesId = this.state.seriesId;
         if (!this.state.isLoaded) {
             DicomService.findInstancesBySeriesId(seriesId, instances => {
@@ -44,49 +48,65 @@ class SeriesViewerPage extends Component {
         }
     }
 
+
     play() {
-        const playTimerId = setInterval(() => {
-            this.nextInstance();
-        }, 400);
-        this.setState({playTimerId: playTimerId});
+        if (!this.state.animationId) {
+            const nextInstance = this.nextInstance;
+            const state = this.state;
+            const animate = (function () {
+                if (!state.animation) {
+                    console.log('ATOP');
+                    return;
+                }
+                setTimeout(function () {
+                    nextInstance();
+                    state.animationId = requestAnimationFrame(animate);
+                }, 1000 / 4)
+            }).bind(this);
+            state.animation = true;
+            state.animationId = requestAnimationFrame(animate);
+        }
     }
 
     stop() {
-        const playTimerId = this.state.playTimerId;
-        clearInterval(playTimerId);
-        this.setState({playTimerId: null});
+        if (this.state.animationId) {
+            const state = this.state;
+            state.animation = false;
+            cancelAnimationFrame(state.animationId);
+            state.animationId = undefined;
+        }
     }
 
     prevInstance() {
-        const currentInstanceId = this.state.instanceIndex;
+        const currentInstanceId = this.state.index;
         const instancesCount = (this.state.instances || []).length;
         if (instancesCount === 0)
             return;
         if (currentInstanceId === 0) {
-            this.setState({instanceIndex: instancesCount - 1, rotation: null});
+            this.setState({index: instancesCount - 1, rotation: null});
         }
         else {
-            this.setState({instanceIndex: currentInstanceId - 1, rotation: null});
+            this.setState({index: currentInstanceId - 1, rotation: null});
         }
     }
 
     nextInstance() {
-        const currentInstanceId = this.state.instanceIndex;
+        const currentInstanceId = this.state.index;
         const instancesCount = (this.state.instances || []).length;
         if (instancesCount === 0)
             return;
         if (currentInstanceId + 1 === instancesCount)
-            this.setState({instanceIndex: 0, rotation: null});
+            this.setState({index: 0, rotation: null});
         else
-            this.setState({instanceIndex: currentInstanceId + 1, rotation: null});
+            this.setState({index: currentInstanceId + 1, rotation: null});
     }
 
     showTags() {
         const instances = this.state.instances;
         if (instances) {
-            const instanceId = instances[this.state.instanceIndex]['id'];
+            const instanceId = instances[this.state.index]['id'];
             DicomService.findTagsByInstanceId(instanceId, tags => {
-                this.setState({currentInstanceTags: tags});
+                this.setState({instanceTags: tags});
             });
         }
     }
@@ -103,164 +123,129 @@ class SeriesViewerPage extends Component {
         this.setState({colorScale: d.value})
     }
 
+    setViewMode(e, d) {
+        this.setState({viewMode: d.value})
+    }
+
+
     render() {
-        const colorScaleOptions = [
-            {
-                'key': 'main',
-                'value': 'main',
-                'text': 'Original'
-            },
-            {
-                'key': 'heatmap',
-                'value': 'heatmap',
-                'text': 'Heatmap'
-            },
-            {
-                'key': 'hotGreen',
-                'value': 'hotGreen',
-                'text': 'Hot Green'
-            },
-            {
-                'key': 'hotRed',
-                'value': 'hotRed',
-                'text': 'Hot Red'
-            }
-        ];
         const instances = this.state.instances;
         if (instances && instances.length > 0) {
-            const instanceIndex = this.state.instanceIndex;
-            const url = `/api/instances/${instances[instanceIndex].id}/image`;
-            const tags = this.state.currentInstanceTags;
-            return (
-                <div style={{
-                    background: 'black'
-                }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
-                    <Menu inverted style={{borderRadius: '0px', marginBottom: '0px'}}>
-                        <Menu.Item>
-                            <Button size={'small'} icon inverted onClick={() => {
-                                this.props.history.push('/studies')
-                            }}>
-                                <Icon name={'home'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.prevInstance}>
-                                <Icon name={'arrow left'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.play}>
-                                <Icon name={'play'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.stop}>
-                                <Icon name={'stop'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.rotateLeft}>
-                                <Icon name={'redo'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.rotateRight}>
-                                <Icon name={'undo'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Modal trigger={
-                                <Button icon inverted onClick={this.showTags}>
-                                    <Icon name={'info circle'}/>
-                                </Button>
-                            }>
-                                <Modal.Header> Instance {instanceIndex + 1}</Modal.Header>
-                                <Modal.Content>
-                                    {
-                                        Object.keys(tags).map(tagName => {
-                                            const tagValue = tags[tagName];
-                                            if (typeof tagValue === 'object' && !Array.isArray(tagValue)) {
-                                                return (
-                                                    <div>
-                                                        <b>{tagName}:</b>
-                                                    </div>
-                                                );
-                                            }
-                                            return (
-                                                <div>
-                                                    <b>{tagName}:</b> {tagValue}
-                                                </div>
-                                            );
-                                        })
-                                    }
-                                </Modal.Content>
-                            </Modal>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Dropdown placeholder='Color scale' fluid search selection options={colorScaleOptions}
-                                      onChange={this.setColorScale}/>
-                        </Menu.Item>
-                        <Menu.Item position={'right'}>
-                            <Button icon inverted onClick={this.nextInstance}>
-                                <Icon name={'arrow right'}/>
-                            </Button>
-                        </Menu.Item>
-                    </Menu>
-                    <DicomViewer url={url} rotation={this.state.rotation} colorScale={this.state.colorScale}/>
-                </div>
-            );
+            const index = this.state.index;
+            const url = `/api/instances/${instances[index].id}/image`;
+            const tags = this.state.instanceTags;
+            const viewMode = this.state.viewMode;
+            if (viewMode === 'one') {
+                return (
+                    <div style={{
+                        background: 'black'
+                    }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
+                        <DicomControlPanel onHome={() => {
+                            this.props.history.push('/studies')
+                        }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
+                                           onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
+                                           onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
+                        <DicomViewer style={{height: window.innerHeight}} index={index} instances={instances} url={url}
+                                     rotation={this.state.rotation}
+                                     colorScale={this.state.colorScale} animation={this.state.animation}/>
+                    </div>
+                );
+            }
+            else if (viewMode === 'two') {
+                const url1 = `/api/instances/${instances[index].id}/image`;
+                const url2 = `/api/instances/${instances[(index + 1) % instances.length].id}/image`;
+                return (
+                    <div style={{
+                        background: 'black'
+                    }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
+                        <DicomControlPanel onHome={() => {
+                            this.props.history.push('/studies')
+                        }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
+                                           onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
+                                           onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
+                        <Grid columns={'equal'}>
+                            <Grid.Row>
+                                <Grid.Column>
+                                    <DicomViewer style={{height: window.innerHeight}} index={index}
+                                                 instances={instances} url={url1}
+                                                 rotation={this.state.rotation}
+                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
+                                </Grid.Column>
+                                <Grid.Column>
+                                    <DicomViewer style={{height: window.innerHeight}} index={index}
+                                                 instances={instances} url={url2}
+                                                 rotation={this.state.rotation}
+                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
+                                </Grid.Column>
+                            </Grid.Row>
+                        </Grid>
+                    </div>
+                );
+            }
+            else if (viewMode === 'four') {
+                const url1 = `/api/instances/${instances[index].id}/image`;
+                const url2 = `/api/instances/${instances[(index + 1) % instances.length].id}/image`;
+                const url3 = `/api/instances/${instances[(index + 2) % instances.length].id}/image`;
+                const url4 = `/api/instances/${instances[(index + 3) % instances.length].id}/image`;
+                return (
+                    <div style={{
+                        background: 'black'
+                    }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
+                        <DicomControlPanel onHome={() => {
+                            this.props.history.push('/studies')
+                        }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
+                                           onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
+                                           onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
+                        <Grid columns={'equal'}>
+                            <Grid.Row>
+                                <Grid.Column>
+                                    <DicomViewer style={{height: window.innerHeight / 2}} index={index}
+                                                 instances={instances} url={url1}
+                                                 rotation={this.state.rotation}
+                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
+                                </Grid.Column>
+                                <Grid.Column>
+                                    <DicomViewer style={{height: window.innerHeight / 2}} index={index}
+                                                 instances={instances} url={url2}
+                                                 rotation={this.state.rotation}
+                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
+                                </Grid.Column>
+                            </Grid.Row>
+                            <Grid.Row>
+                                <Grid.Column>
+                                    <DicomViewer style={{height: window.innerHeight / 2}} index={index}
+                                                 instances={instances} url={url3}
+                                                 rotation={this.state.rotation}
+                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
+                                </Grid.Column>
+                                <Grid.Column>
+                                    <DicomViewer style={{height: window.innerHeight / 2}} index={index}
+                                                 instances={instances} url={url4}
+                                                 rotation={this.state.rotation}
+                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
+                                </Grid.Column>
+                            </Grid.Row>
+                        </Grid>
+                    </div>
+                );
+            }
         }
         else {
             return (
                 <div style={{
                     background: 'black'
                 }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
-                    <Menu inverted style={{borderRadius: '0px', marginBottom: '0px'}}>
-                        <Menu.Item>
-                            <Button size={'small'} icon inverted onClick={() => {
-                                this.props.history.push('/studies')
-                            }}>
-                                <Icon name={'home'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.prevInstance}>
-                                <Icon name={'arrow left'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.play}>
-                                <Icon name={'play'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.stop}>
-                                <Icon name={'stop'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.rotateLeft}>
-                                <Icon name={'redo'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button icon inverted onClick={this.rotateRight}>
-                                <Icon name={'undo'}/>
-                            </Button>
-                        </Menu.Item>
-                        <Menu.Item position={'right'}>
-                            <Button icon inverted onClick={this.nextInstance}>
-                                <Icon name={'arrow right'}/>
-                            </Button>
-                        </Menu.Item>
-                    </Menu>
+                    <DicomControlPanel onHome={() => {
+                        this.props.history.push('/studies')
+                    }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
+                                       onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
+                                       onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
                 </div>
             );
         }
     }
 
     onKeyPress(event) {
-        console.log(event);
         if (event.key === 'ArrowLeft') {
             this.prevInstance();
         }

@@ -8,27 +8,24 @@ class DicomViewer extends Component {
     }
 
     onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.aspect = this.node.clientWidth / this.node.clientHeight;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(this.node.clientWidth, this.node.clientHeight);
     }
 
     componentDidMount() {
         let url = this.props.url;
-        console.log(url);
-        const scene = new THREE.Scene();
-        this.scene = scene;
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-        this.camera = camera;
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer = renderer;
-        this.node.appendChild(renderer.domElement);
-        window.addEventListener('resize', this.onWindowResize, false);
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, this.node.clientWidth / this.node.clientHeight, 0.1, 100);
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.setSize(this.node.clientWidth, this.node.clientHeight);
+        this.node.appendChild(this.renderer.domElement);
+
+        this.node.addEventListener('resize', this.onWindowResize, false);
 
         const vertShader = document.getElementById('mainVert').textContent;
-        console.log(this.props.colorScale);
         const fragShader = document.getElementById(this.props.colorScale + 'Frag').textContent;
+
         new THREE.TextureLoader().load(url, (texture) => {
             const uniforms = {
                 texture: {
@@ -41,17 +38,16 @@ class DicomViewer extends Component {
                 vertexShader: vertShader,
                 fragmentShader: fragShader
             });
-            const cube = new THREE.Mesh(geometry, material);
+            this.cube = new THREE.Mesh(geometry, material);
             if (this.props.rotation === 'left')
-                cube.rotation.z -= 0.5;
+                this.cube.rotation.z -= 0.5;
             else if (this.props.rotation === 'right')
-                cube.rotation.z += 0.5;
+                this.cube.rotation.z += 0.5;
             else
-                cube.rotation.z = 0.0;
-            this.cube = cube;
-            scene.add(cube);
-            camera.position.z = 2;
-            renderer.render(scene, camera);
+                this.cube.rotation.z = 0.0;
+            this.scene.add(this.cube);
+            this.camera.position.z = 2;
+            this.renderer.render(this.scene, this.camera);
         });
     }
 
@@ -84,7 +80,7 @@ class DicomViewer extends Component {
 
     render() {
         return (
-            <div ref={node => this.node = node}>
+            <div ref={node => this.node = node} style={{height: window.innerHeight}}>
             </div>
         )
     }

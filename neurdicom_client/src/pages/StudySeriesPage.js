@@ -86,10 +86,8 @@ export default class StudySeriesPage extends Component {
                                         return (
                                             <div>
                                                 <Header as='h4' inverted color='yellow'
-                                                        attached>
-                                                    <Link to={`/series/${seriesItem['id']}`}>
-                                                        {seriesItem['protocol_name'] || `Series ${index + 1}`}
-                                                    </Link>
+                                                        attached textAlign={'left'}>
+                                                    {seriesItem['protocol_name'] || `Series ${index + 1}`}
                                                 </Header>
                                                 <Segment attached>
                                                     <b>Series
@@ -106,6 +104,10 @@ export default class StudySeriesPage extends Component {
                                                     <br/>
                                                     <b>Images Count: </b>{seriesItem['images_count']}
                                                 </Segment>
+                                                <div className={'ui attached right aligned header'}>
+                                                    <Button floated positive as={Link}
+                                                            to={`/series/${seriesItem['id']}`}>Open</Button>
+                                                </div>
                                                 <br/>
                                             </div>
                                         );
