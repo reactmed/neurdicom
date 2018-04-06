@@ -10,6 +10,7 @@ import PluginsPage from "./pages/PluginsPage";
 import SeriesViewerPage from "./pages/SeriesViewerPage";
 import LoginPage from "./pages/LoginPage";
 import DicomNodesPage from "./pages/DicomNodesPage";
+import UploadDicomPage from "./pages/UploadDicomPage";
 
 ReactDOM.render(
     <BrowserRouter>
@@ -20,6 +21,7 @@ ReactDOM.render(
             <Route path='/plugins' component={PluginsPage}/>
             <Route path='/dicom_nodes' component={DicomNodesPage}/>
             <Route path='/series/:id' component={SeriesViewerPage}/>
+            <Route path='/dicom/upload' component={UploadDicomPage}/>
             <Route exact path='/' component={StudiesPage}/>
         </div>
     </BrowserRouter>,

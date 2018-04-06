@@ -7,14 +7,12 @@ class PluginModal extends Component {
         super(props);
         this.state = {
             instanceId: this.props.instanceId,
-            currentPluginId: 0,
-            isApplied: false,
-            isChosen: false
+            currentPluginId: null,
+            isApplied: false
         }
     }
 
     render() {
-        const isChosen = this.state.isChosen;
         const isApplied = this.state.isApplied;
         return (
             <Modal centered trigger={

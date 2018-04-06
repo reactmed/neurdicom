@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Dropdown} from "semantic-ui-react";
+import {Dropdown, Form} from "semantic-ui-react";
 import PluginsService from "../../services/PluginsService";
 
 class PluginSelect extends Component {
@@ -31,9 +31,40 @@ class PluginSelect extends Component {
 
     render() {
         const plugins = this.state.plugins;
-        return (
-            <Dropdown placeholder='Select Plugin' fluid search selection options={plugins}/>
-        )
+        const currentPluginId = this.state.currentPluginId;
+        if (currentPluginId) {
+            const plugin = plugins[currentPluginId];
+            const paras = plugin.params;
+            return (
+                <div>
+                    {/*<Dropdown onChange={this.handlePluginSelection} placeholder='Select Plugin' fluid search selection*/}
+                              {/*options={plugins}/>*/}
+                    {/*<Form>*/}
+                        {/*{*/}
+
+                        {/*}*/}
+                        {/*<Form.Input*/}
+                            {/*id='id_patient_name'*/}
+                            {/*label='Patient Name'*/}
+                            {/*action={<Dropdown id='id_patient_name_filter' button basic floating*/}
+                                              {/*options={patientMatcherOptions}*/}
+                                              {/*defaultValue='exact'/>}*/}
+                            {/*icon='search'*/}
+                            {/*name='patient_name'*/}
+                            {/*iconPosition='left'*/}
+                            {/*placeholder='Patient Name'*/}
+                            {/*onKeyPress={this.handleFindInputOnChange}*/}
+                        {/*/>*/}
+                    {/*</Form>*/}
+                </div>
+            )
+        }
+        else {
+            return (
+                <Dropdown onChange={this.handlePluginSelection} placeholder='Select Plugin' fluid search selection
+                          options={plugins}/>
+            )
+        }
     }
 }
 

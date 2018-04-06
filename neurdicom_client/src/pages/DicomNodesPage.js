@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import MenuContainer from "../components/common/MenuContainer.component";
+import MenuContainer from "../components/common/MenuContainer";
 import {Form, Header, Icon, Modal, Select, Table} from "semantic-ui-react";
 import DicomNodeService from "../services/DicomNodeService";
 import * as axios from 'axios';

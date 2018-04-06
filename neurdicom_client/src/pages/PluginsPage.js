@@ -1,4 +1,4 @@
-import MenuContainer from "../components/common/MenuContainer.component";
+import MenuContainer from "../components/common/MenuContainer";
 import React, {Component} from "react";
 import PluginsService from "../services/PluginsService";
 import {Button, Divider, Dropdown, Form, Header, Message, Segment, Select} from "semantic-ui-react";

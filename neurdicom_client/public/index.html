@@ -14,26 +14,33 @@
     <!--<script src="%PUBLIC_URL%/cornerstone-wado-image-loader/cornerstoneWADOImageLoader.min.js"></script>-->
     <!--<script src="%PUBLIC_URL%/cornerstone-wado-image-loader/cornerstoneWADOImageLoaderCodecs.min.js"></script>-->
     <!--<script src="%PUBLIC_URL%/cornerstone-wado-image-loader/cornerstoneWADOImageLoaderWebWorker.min.js"></script>-->
-    <script>
-        cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-    </script>
     <title>React App</title>
 </head>
 <body>
 <noscript>
     You need to enable JavaScript to run this app.
 </noscript>
-<div id="root" style="height: 100%"></div>
-<!--
-  This HTML file is a template.
-  If you open it directly in the browser, you will see an empty page.
+<script id="mainVert" type="x-shader/x-vertex">
+    varying vec2 vUv;
 
-  You can add webfonts, meta tags, or analytics to this file.
-  The build step will place the bundled scripts into the <body> tag.
+    void main() {
+        vUv = uv;
 
-  To begin the development, run `npm start` or `yarn start`.
-  To create a production bundle, use `npm run build` or `yarn build`.
--->
+        gl_Position =   projectionMatrix *
+                        modelViewMatrix *
+                        vec4(position,1.0);
+    }
+</script>
+<script id="mainFrag" type="x-shader/x-fragment">
+    uniform sampler2D texture;
+
+    varying vec2 vUv;
+
+    void main() {
+        gl_FragColor = texture2D(texture, vUv);
+    }
+</script>
+<div id="root" style="height: 100%; min-height: 300px; min-width: 1000px;"></div>
 <script>
 
 </script>

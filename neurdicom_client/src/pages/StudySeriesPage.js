@@ -4,7 +4,7 @@ import {
     TextArea
 } from "semantic-ui-react";
 import StudiesService from "../services/DicomService";
-import MenuContainer from "../components/common/MenuContainer.component";
+import MenuContainer from "../components/common/MenuContainer";
 import {Link} from "react-router-dom";
 
 const options = [
