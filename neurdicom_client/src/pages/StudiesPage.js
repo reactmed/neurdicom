@@ -5,7 +5,7 @@ import {
 } from "semantic-ui-react";
 import StudiesService from "../services/DicomService";
 import {Link} from "react-router-dom";
-import MenuContainer from "../components/common/MenuContainer.component";
+import MenuContainer from "../components/common/MenuContainer";
 
 const patientMatcherOptions = [
     {key: 'EXACT', text: 'Exact equals', value: 'EXACT'},

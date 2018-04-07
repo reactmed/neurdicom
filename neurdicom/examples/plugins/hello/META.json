@@ -1,0 +1,10 @@
+{
+  "author": "Roman Yarnykh",
+  "version": "1.0.0",
+  "info": "HELLO",
+  "name": "hello",
+  "docs": "HELLO",
+  "result": {
+    "type": "JSON"
+  }
+}

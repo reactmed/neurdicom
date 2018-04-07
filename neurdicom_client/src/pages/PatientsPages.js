@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import StudiesService from "../services/DicomService";
 import {Button, Dropdown, Select, Table, Form, Menu, Segment, Grid, Header} from "semantic-ui-react";
 import {Link} from "react-router-dom";
-import MenuContainer from "../components/common/MenuContainer.component";
+import MenuContainer from "../components/common/MenuContainer";
 
 const patientMatcherOptions = [
     {key: 'exact', text: 'Exact equals', value: 'exact'},

@@ -4,7 +4,7 @@ import {
     TextArea
 } from "semantic-ui-react";
 import StudiesService from "../services/DicomService";
-import MenuContainer from "../components/common/MenuContainer.component";
+import MenuContainer from "../components/common/MenuContainer";
 import {Link} from "react-router-dom";
 
 const options = [
@@ -85,11 +85,9 @@ export default class StudySeriesPage extends Component {
                                     series.map((seriesItem, index) => {
                                         return (
                                             <div>
-                                                <Header as='h4' inverted color='yellow'
-                                                        attached>
-                                                    <Link to={`/series/${seriesItem['id']}`}>
-                                                        {seriesItem['protocol_name'] || `Series ${index + 1}`}
-                                                    </Link>
+                                                <Header as='h4' inverted color='white'
+                                                        attached textAlign={'left'}>
+                                                    {seriesItem['protocol_name'] || `Series ${index + 1}`}
                                                 </Header>
                                                 <Segment attached>
                                                     <b>Series
@@ -106,6 +104,10 @@ export default class StudySeriesPage extends Component {
                                                     <br/>
                                                     <b>Images Count: </b>{seriesItem['images_count']}
                                                 </Segment>
+                                                <div className={'ui attached right aligned header'}>
+                                                    <Button floated positive as={Link}
+                                                            to={`/series/${seriesItem['id']}`}>Open</Button>
+                                                </div>
                                                 <br/>
                                             </div>
                                         );

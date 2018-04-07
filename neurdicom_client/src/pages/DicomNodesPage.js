@@ -1,10 +1,22 @@
 import React, {Component} from 'react';
-import MenuContainer from "../components/common/MenuContainer.component";
-import {Form, Header, Icon, Modal, Select, Table} from "semantic-ui-react";
+import MenuContainer from "../components/common/MenuContainer";
+import {Form, Header, Icon, Modal, Table} from "semantic-ui-react";
 import DicomNodeService from "../services/DicomNodeService";
-import * as axios from 'axios';
 import Button from "semantic-ui-react/dist/es/elements/Button/Button";
 import EchoButton from "../components/dicomNodesPage/EchoButton.component";
+
+const protocolOptions = [
+    {
+        "key": "dicomweb",
+        "value": "dicomweb",
+        "text": "DICOMWeb"
+    },
+    {
+        "key": "dicom",
+        "value": "dicom",
+        "text": "DICOM"
+    },
+];
 
 class DicomNodesPage extends Component {
     constructor(props) {
@@ -46,6 +58,11 @@ class DicomNodesPage extends Component {
                         <Form.Input
                             label='Name'
                             placeholder='Name'
+                        />
+                        <Form.Select
+                            label='Protocol'
+                            placeholder='Protocol'
+                            options={protocolOptions}
                         />
                     </Form.Group>
                     <Form.Group widths='equal'>

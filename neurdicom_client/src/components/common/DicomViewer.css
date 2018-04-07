@@ -1,0 +1,62 @@
+.leftTop{
+    position: absolute;
+    top: 80px;
+    /*padding-top: 40px;*/
+    /*padding-left: 10px;*/
+    left: 40px;
+    z-index: 5;
+    display:block;
+    text-align: left;
+    color: white;
+}
+
+.leftTop2{
+    position: absolute;
+    top: 30%;
+    left: 10px;
+    z-index: 5;
+    display:block;
+    text-align: left;
+    color: white;
+}
+
+.leftTop3{
+    position: absolute;
+    top: 40%;
+    left: 10px;
+    z-index: 5;
+    display:block;
+    text-align: left;
+    color: white;
+}
+
+.leftTop4{
+    position: absolute;
+    top: 80%;
+    left: 10px;
+    z-index: 5;
+    display:block;
+    text-align: left;
+    color: white;
+}
+
+.leftTop5{
+    position: absolute;
+    top: 100%;
+    left: 10px;
+    z-index: 5;
+    display:block;
+    text-align: left;
+    color: white;
+}
+
+
+.leftTop6{
+    position: absolute;
+    top: 120%;
+    left: 10px;
+    z-index: 5;
+    display:block;
+    text-align: left;
+    color: white;
+}

@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from pydicom import read_file
 from tornado import gen
 
@@ -11,17 +13,60 @@ import pynetdicom3 as netdicom
 ECHO_SUCCESS = 0x0000
 
 
-class PatientListHandler(ModelListHandler):
+# GET /api/patients
+class PatientListHandler(ListHandler):
+    """
+    Return all patients stored in database
+
+    Success
+
+    - 200 - All patients were found
+
+    Failure
+
+    - 401 - Not authorized user
+    - 403 - User has not permissions for retrieving patients
+
+    """
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
 
 
-class PatientDetailHandler(ModelDetailHandler):
+# GET /api/patients/:id
+class PatientDetailHandler(RetrieveHandler):
+    """
+    Return patient by specified id
+
+    Success
+
+    - 200 - Found patient
+
+    Failure
+
+    - 404 - Patient not found with specified id
+    - 401 - Not authorized user
+    - 403 - User has not permissions for retrieving patients
+
+    """
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
 
 
-class PatientStudiesHandler(ModelListHandler):
+# GET /api/patients/:id/studies
+class PatientStudiesHandler(ListHandler):
+    """ Get patient's studies
+
+    Success
+
+    - 200 - All studies were found
+
+    Failure
+
+    - 404 - Patient not found with specified id
+    - 401 - Not authorized user
+    - 403 - User has not permissions for retrieving patients
+
+    """
     expected_path_params = ['patient_id']
     serializer_class = StudySerializer
 
@@ -30,17 +75,55 @@ class PatientStudiesHandler(ModelListHandler):
         return Study.objects.filter(patient_id=self.path_params['patient_id'])
 
 
-class StudyListHandler(ModelListHandler):
+# GET /api/studies
+class StudyListHandler(ListHandler):
+    """ Get studies
+
+    Success
+
+    - 200 - All studies were found
+
+    Failure
+
+    - 401 - Not authorized user
+    - 403 - User has not permissions for retrieving patients
+
+    """
     queryset = Study.objects.all()
     serializer_class = StudySerializer
 
 
-class StudyDetailHandler(ModelDetailHandler):
+# GET /api/studies/:id
+class StudyDetailHandler(RetrieveDestroyHandler):
+    """ Find study by id
+
+    Success
+
+       - 200 - Study found
+
+    Failure
+
+       - 404 - Not found
+       - 401 - Not authorized user
+       - 403 - User has not permissions for retrieving patients
+    """
     queryset = Study.objects.all()
     serializer_class = StudySerializer
 
 
-class StudySeriesHandler(ModelListHandler):
+# GET /api/studies/:id/series
+class StudySeriesHandler(ListHandler):
+    """ Find series by study
+
+    Success
+
+       - 200 - All series were found
+
+    Failure
+
+       - 401 - Not authorized user
+       - 403 - User has not permissions for retrieving patients
+    """
     expected_path_params = ['study_id']
     serializer_class = SeriesSerializer
 
@@ -49,17 +132,54 @@ class StudySeriesHandler(ModelListHandler):
         return Series.objects.filter(study_id=self.path_params['study_id'])
 
 
-class SeriesListHandler(ModelListHandler):
+# GET /api/series
+class SeriesListHandler(ListHandler):
+    """ Find series
+
+    Success
+
+        - 200 - All series were found
+
+    Failure
+
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Series.objects.all()
     serializer_class = SeriesSerializer
 
 
-class SeriesDetailHandler(ModelDetailHandler):
+# GET /api/series/:id
+class SeriesDetailHandler(RetrieveHandler):
+    """ Find series by id
+
+    Success
+
+        - 200 - Series was found
+
+    Failure
+
+        - 404 - Series not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Series.objects.all()
     serializer_class = SeriesSerializer
 
 
-class SeriesInstancesHandler(ModelListHandler):
+# GET /api/series/:id/instances
+class SeriesInstancesHandler(ListHandler):
+    """ Find instances by series
+
+    Success
+
+        - 200 - All instances were found
+
+    Failure
+
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     expected_path_params = ['series_id']
     serializer_class = InstanceDetailSerializer
 
@@ -68,17 +188,55 @@ class SeriesInstancesHandler(ModelListHandler):
         return Instance.objects.filter(series_id=self.path_params['series_id']).order_by('instance_number')
 
 
-class InstanceListHandler(ModelListHandler):
+# GET /api/instances
+class InstanceListHandler(ListHandler):
+    """ Find instances
+
+    Success
+
+        - 200 - All instances were found
+
+    Failure
+
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Instance.objects.all()
     serializer_class = InstanceSerializer
 
 
-class InstanceDetailHandler(ModelDetailHandler):
+# GET /api/instances/:id
+class InstanceDetailHandler(RetrieveHandler):
+    """ Find instance by id
+
+    Success
+
+        - 200 - Instance was found
+
+    Failure
+        - 404 - Instance not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Instance.objects.all()
     serializer_class = InstanceDetailSerializer
 
 
+# POST /api/instances/:id/process/by_plugin/:id
+
 class InstanceProcessHandler(BaseNeurDicomHandler):
+    """ Process an instances with specified plugin (or filter)
+
+    Success
+
+        - 200 - OK
+
+    Failure
+        - 404 - Instance or plugin were not found
+        - 500 - Process error
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
 
     def prepare(self):
         super(BaseNeurDicomHandler, self).prepare()
@@ -89,14 +247,34 @@ class InstanceProcessHandler(BaseNeurDicomHandler):
             except ValueError:
                 self.send_error(400, message='Body is not JSON deserializable')
 
+    def _convert(self, v, t):
+        if t == 'int':
+            return int(v)
+        else:
+            return float(v)
+
     @gen.coroutine
-    def post(self, instance_id, by_plugin_id, *args, **kwargs):
+    def get(self, instance_id, by_plugin_id, *args, **kwargs):
         instance = Instance.objects.get(pk=instance_id)
-        params = self.request.arguments
         plugin = Plugin.objects.get(pk=by_plugin_id)
+        params = {}
+        for k in plugin.params:
+            if plugin.params[k].get('is_array', False):
+                v = self.get_query_arguments(k, None)
+            else:
+                v = self.get_query_argument(k, None)
+            if v is not None:
+                if isinstance(v, list) or isinstance(v, tuple):
+                    params[k] = [self._convert(item, plugin.params[k]['type']) for item in v]
+                else:
+                    params[k] = self._convert(v, plugin.params[k]['type'])
+
         result = DicomProcessor.process(instance, plugin, **params)
         if plugin.result['type'] == 'IMAGE':
-            result = convert_array_to_img(result)
+            if isinstance(result, BytesIO):
+                result = result.getvalue()
+            else:
+                result = convert_array_to_img(result)
             self.set_header('Content-Type', 'image/jpeg')
             self.write(result)
         elif plugin.result['type'] == 'JSON':
@@ -108,7 +286,19 @@ class InstanceProcessHandler(BaseNeurDicomHandler):
             self.send_error(500, message='Unknown result type')
 
 
+# GET /api/instances/:id/tags
 class InstanceTagsHandler(BaseDicomJsonHandler):
+    """ Find instance tags
+
+    Success
+
+        - 200 - Tags found
+
+    Failure
+        - 404 - Instance not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
 
     @gen.coroutine
     def get(self, instance_id, *args, **kwargs):
@@ -117,7 +307,19 @@ class InstanceTagsHandler(BaseDicomJsonHandler):
         yield self.write(ds)
 
 
+# GET /api/instances/:id/image
 class InstanceImageHandler(BaseDicomImageHandler):
+    """ Find instance image
+
+    Success
+
+        - 200 - Instance image was found
+
+    Failure
+        - 404 - Instance not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving instances
+    """
 
     @gen.coroutine
     def get(self, instance_id, *args, **kwargs):
@@ -126,17 +328,73 @@ class InstanceImageHandler(BaseDicomImageHandler):
         yield self.write(ds)
 
 
-class DicomNodeListHandler(ModelListCreateHandler):
+# GET /api/instances/:id/raw
+class InstanceRawHandler(BaseBytesHandler):
+    """ Find instance image
+
+        Success
+
+            - 200 - Instance image was found
+
+        Failure
+            - 404 - Instance not found
+            - 401 - Not authorized user
+            - 403 - User has not permissions for retrieving instances
+    """
+
+    @gen.coroutine
+    def get(self, instance_id, *args, **kwargs):
+        instance = Instance.objects.get(pk=instance_id)
+        yield self.write(read_file(instance.image).PixelData)
+
+
+# GET /api/dicom_nodes
+class DicomNodeListHandler(ListCreateHandler):
+    """ Find DICOM nodes
+
+    Success
+
+        - 200 - All nodes found
+
+    Failure
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = DicomNode.objects.all()
     serializer_class = DicomNodeSerializer
 
 
-class DicomNodeDetailHandler(ModelDetailHandler):
+# GET /api/dicom_nodes/:id
+class DicomNodeDetailHandler(RetrieveHandler):
+    """ Find DICOM node by id
+
+    Success
+
+        - 200 - All nodes found
+
+    Failure
+        - 404 - DICOM node not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = DicomNode.objects.all()
     serializer_class = DicomNodeSerializer
 
 
+# GET /api/dicom_nodes/:id/echo
 class DicomNodeEchoHandler(BaseJsonHandler):
+    """ Make ECHO request to DICOM node
+
+    Success
+
+        - 200 - ECHO succeeded
+
+    Failure
+        - 404 - DICOM node not found
+        - 500 - ECHO failed
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     expected_path_params = ['dicom_node_id']
 
     def get(self, *args, **kwargs):
@@ -153,11 +411,34 @@ class DicomNodeEchoHandler(BaseJsonHandler):
         self.send_error(500, message='Echo failed')
 
 
-class PluginListHandler(ModelListCreateHandler):
+# GET /api/plugins
+class PluginListHandler(ListCreateHandler):
+    """ Find plugins
+
+    Success
+
+        - 200 - Plugins were found
+
+    Failure
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Plugin.objects.all()
     serializer_class = PluginSerializer
 
 
-class PluginDetailHandler(ModelDetailHandler):
+# GET /api/plugins/:id
+class PluginDetailHandler(RetrieveDestroyHandler):
+    """ Find plugin by id
+
+    Success
+
+        - 200 - Plugins were found
+
+    Failure
+        - 404 - Plugin not found
+        - 401 - Not authorized user
+        - 403 - User has not permissions for retrieving patients
+    """
     queryset = Plugin.objects.all()
     serializer_class = PluginSerializer

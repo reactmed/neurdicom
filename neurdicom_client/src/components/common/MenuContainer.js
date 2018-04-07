@@ -3,6 +3,25 @@ import {Link} from "react-router-dom";
 import {Button, Icon, Menu, Segment} from "semantic-ui-react";
 
 class MenuContainer extends Component {
+    constructor(props){
+        super(props);
+        this.setState = this.setState.bind(this);
+        this.uploadDicomFile = this.uploadDicomFile.bind(this);
+        this.uploadPlugin = this.uploadPlugin.bind(this);
+        this.state = {
+            isUploadDicomDialogVisible: false,
+            isUploadPluginVisible: false
+        }
+    }
+
+    uploadDicomFile(){
+
+    }
+
+    uploadPlugin(){
+
+    }
+
     render() {
         return (
             <div>
@@ -37,7 +56,7 @@ class MenuContainer extends Component {
 }
 
 MenuContainer.defaultProps = {
-    activeItem: 'studies'
+    activeItem: ''
 };
 
 export default MenuContainer;
