@@ -132,10 +132,16 @@ class SeriesViewerPage extends Component {
         const instances = this.state.instances;
         if (instances && instances.length > 0) {
             const index = this.state.index;
-            const url = `/api/instances/${instances[index].id}/image`;
-            const tags = this.state.instanceTags;
             const viewMode = this.state.viewMode;
             if (viewMode === 'one') {
+                const viewerProps = {
+                    style: {
+                        height: window.innerHeight
+                    },
+                    instance: instances[index],
+                    rotation: this.state.rotation,
+                    colorScale: this.state.colorScale,
+                };
                 return (
                     <div style={{
                         background: 'black'
@@ -145,15 +151,20 @@ class SeriesViewerPage extends Component {
                         }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
                                            onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
                                            onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
-                        <DicomViewer style={{height: window.innerHeight}} index={index} instances={instances} url={url}
-                                     rotation={this.state.rotation}
-                                     colorScale={this.state.colorScale} animation={this.state.animation}/>
+                        <DicomViewer {...viewerProps}/>
                     </div>
                 );
             }
             else if (viewMode === 'two') {
-                const url1 = `/api/instances/${instances[index].id}/image`;
-                const url2 = `/api/instances/${instances[(index + 1) % instances.length].id}/image`;
+                const viewerProps = {
+                    style: {
+                        height: window.innerHeight
+                    },
+                    rotation: this.state.rotation,
+                    colorScale: this.state.colorScale,
+                };
+                const instance1 = instances[index];
+                const instance2 = instances[(index + 1) % instances.length];
                 return (
                     <div style={{
                         background: 'black'
@@ -166,63 +177,10 @@ class SeriesViewerPage extends Component {
                         <Grid columns={'equal'}>
                             <Grid.Row>
                                 <Grid.Column>
-                                    <DicomViewer style={{height: window.innerHeight}} index={index}
-                                                 instances={instances} url={url1}
-                                                 rotation={this.state.rotation}
-                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
+                                    <DicomViewer instance={instance1} {...viewerProps}/>
                                 </Grid.Column>
                                 <Grid.Column>
-                                    <DicomViewer style={{height: window.innerHeight}} index={index}
-                                                 instances={instances} url={url2}
-                                                 rotation={this.state.rotation}
-                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
-                                </Grid.Column>
-                            </Grid.Row>
-                        </Grid>
-                    </div>
-                );
-            }
-            else if (viewMode === 'four') {
-                const url1 = `/api/instances/${instances[index].id}/image`;
-                const url2 = `/api/instances/${instances[(index + 1) % instances.length].id}/image`;
-                const url3 = `/api/instances/${instances[(index + 2) % instances.length].id}/image`;
-                const url4 = `/api/instances/${instances[(index + 3) % instances.length].id}/image`;
-                return (
-                    <div style={{
-                        background: 'black'
-                    }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
-                        <DicomControlPanel onHome={() => {
-                            this.props.history.push('/studies')
-                        }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
-                                           onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
-                                           onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
-                        <Grid columns={'equal'}>
-                            <Grid.Row>
-                                <Grid.Column>
-                                    <DicomViewer style={{height: window.innerHeight / 2}} index={index}
-                                                 instances={instances} url={url1}
-                                                 rotation={this.state.rotation}
-                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
-                                </Grid.Column>
-                                <Grid.Column>
-                                    <DicomViewer style={{height: window.innerHeight / 2}} index={index}
-                                                 instances={instances} url={url2}
-                                                 rotation={this.state.rotation}
-                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
-                                </Grid.Column>
-                            </Grid.Row>
-                            <Grid.Row>
-                                <Grid.Column>
-                                    <DicomViewer style={{height: window.innerHeight / 2}} index={index}
-                                                 instances={instances} url={url3}
-                                                 rotation={this.state.rotation}
-                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
-                                </Grid.Column>
-                                <Grid.Column>
-                                    <DicomViewer style={{height: window.innerHeight / 2}} index={index}
-                                                 instances={instances} url={url4}
-                                                 rotation={this.state.rotation}
-                                                 colorScale={this.state.colorScale} animation={this.state.animation}/>
+                                    <DicomViewer instance={instance2} {...viewerProps}/>
                                 </Grid.Column>
                             </Grid.Row>
                         </Grid>

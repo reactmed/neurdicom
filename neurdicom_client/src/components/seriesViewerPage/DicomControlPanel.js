@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {Button, Dropdown, Icon, Menu, Modal} from "semantic-ui-react";
 import PropTypes from 'prop-types';
+import PluginsService from "../../services/PluginsService";
 
 const colorScaleOptions = [
     {
@@ -14,14 +15,24 @@ const colorScaleOptions = [
         'text': 'Heatmap'
     },
     {
-        'key': 'hotGreen',
-        'value': 'hotGreen',
-        'text': 'Hot Green'
+        'key': 'inverseHeatmap',
+        'value': 'inverseHeatmap',
+        'text': 'Inverse Heatmap'
     },
     {
         'key': 'hotRed',
         'value': 'hotRed',
         'text': 'Hot Red'
+    },
+    {
+        'key': 'hotGreen',
+        'value': 'hotGreen',
+        'text': 'Hot Green'
+    },
+    {
+        'key': 'hotBlue',
+        'value': 'hotBlue',
+        'text': 'Hot Blue'
     },
     {
         'key': 'inverse',
@@ -40,11 +51,6 @@ const viewModeOptions = [
         'key': 'two',
         'value': 'two',
         'text': 'Two images'
-    },
-    {
-        'key': 'four',
-        'value': 'four',
-        'text': 'Four images'
     }
 ];
 
@@ -69,10 +75,27 @@ class DicomControlPanel extends Component {
         };
         this.onRotateRight = this.props.onRotateRight || function () {
         };
+        this.setState = this.setState.bind(this);
+        this.state = {
+            pluginOptions: []
+        }
     }
 
+    componentDidMount() {
+        PluginsService.findPlugins((plugins) => {
+            const pluginOptions = plugins.map(function (plugin) {
+                return {
+                    key: plugin.id,
+                    value: plugin.id,
+                    text: plugin.info
+                };
+            });
+            this.setState({pluginOptions: pluginOptions})
+        });
+    }
 
     render() {
+        const pluginOptions = this.state.pluginOptions;
         return (
             <Menu inverted style={{borderRadius: '0px', marginBottom: '0px'}}>
                 <Menu.Item>
@@ -126,6 +149,15 @@ class DicomControlPanel extends Component {
                 <Menu.Item>
                     <Button icon inverted onClick={this.onRotateRight}>
                         <Icon name={'undo'}/>
+                    </Button>
+                </Menu.Item>
+                <Menu.Item position={'right'}>
+                    <Dropdown placeholder='Plugin' fluid search selection options={pluginOptions}
+                    />
+                </Menu.Item>
+                <Menu.Item>
+                    <Button primary>
+                        Apply plugin
                     </Button>
                 </Menu.Item>
                 <Menu.Item position={'right'}>

@@ -15,7 +15,7 @@ class DicomViewer extends Component {
     }
 
     componentDidMount() {
-        let url = this.props.url;
+        let url = `/api/instances/${this.props.instance.id}/image`;
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, this.node.clientWidth / this.node.clientHeight, 0.1, 100);
         this.renderer = new THREE.WebGLRenderer();
@@ -53,7 +53,7 @@ class DicomViewer extends Component {
     }
 
     componentDidUpdate() {
-        const url = this.props.url;
+        let url = `/api/instances/${this.props.instance.id}/image`;
         const vertShader = document.getElementById('mainVert').textContent;
         const fragShader = document.getElementById(this.props.colorScale + 'Frag').textContent;
         new THREE.TextureLoader().load(url, (texture) => {
@@ -80,8 +80,7 @@ class DicomViewer extends Component {
     }
 
     render() {
-        const instance = this.props.instances[this.props.index];
-        console.log(instance);
+        const instance = this.props.instance;
         return (
             <div ref={node => this.node = node} style={{height: window.innerHeight}}>
                 <div className={'leftTop'}>

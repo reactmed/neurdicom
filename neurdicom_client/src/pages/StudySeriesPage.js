@@ -85,7 +85,7 @@ export default class StudySeriesPage extends Component {
                                     series.map((seriesItem, index) => {
                                         return (
                                             <div>
-                                                <Header as='h4' inverted color='yellow'
+                                                <Header as='h4' inverted color='white'
                                                         attached textAlign={'left'}>
                                                     {seriesItem['protocol_name'] || `Series ${index + 1}`}
                                                 </Header>
