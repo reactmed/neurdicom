@@ -21,7 +21,7 @@ NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allo
 - [Models](docs/ModelsApiDocs.md)
 - [DICOM nodes](docs/DicomNodesApiDocs.md)
 
-### 1.1. Patients
+### :green_book: 1.1. Patients
 
 **Base URL:** /api
 
@@ -33,22 +33,22 @@ NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allo
 | PUT /patients/:id  | Update patient  |
 | DELETE /patients/:id  | Delete patient  |
 
-## :green_book: GET /patients
+#### GET /patients
 **Description**: Find all patients
 
-## :green_book: GET /patients/:id
+#### GET /patients/:id
 **Description**: Find patient by id
 
-## :green_book: GET /patients/:id/studies
+#### GET /patients/:id/studies
 **Description**: Find patient's studies
 
-## :green_book: PUT /patients/:id
+#### PUT /patients/:id
 **Description**: Update patient
 
-## :green_book: DELETE /patients/:id
+#### DELETE /patients/:id
 **Description**: Delete patient
 
-### 1.3 Studies
+### :green_book:  1.3 Studies
 
 **Base URL:** /api
 
@@ -60,22 +60,22 @@ NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allo
 | PUT /studies/:id  | Update study  |
 | DELETE /studies/:id  | Delete study  |
 
-## :green_book: GET /studies
+#### GET /studies
 **Description**: Find all studies
 
-## :green_book: GET /studies/:id
+#### GET /studies/:id
 **Description**: Find study by id
 
-## :green_book: GET /studies/:id/series
+#### GET /studies/:id/series
 **Description**: Find study's series
 
-## :green_book: PUT /studies/:id
+#### PUT /studies/:id
 **Description**: Update study
 
-## :green_book: DELETE /studies/:id
+#### DELETE /studies/:id
 **Description**: Delete study
 
-### 1.3 Series
+### :green_book: 1.3 Series
 
 **Base URL:** /api
 
@@ -87,22 +87,22 @@ NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allo
 | PUT /series/:id  | Update series |
 | DELETE /series/:id  | Delete series |
 
-## :green_book: GET /series
+#### GET /series
 **Description**: Find all series
 
-## :green_book: GET /series/:id
+#### GET /series/:id
 **Description**: Find series by id
 
-## :green_book: GET /series/:id/instances
+#### GET /series/:id/instances
 **Description**: Find series' instances
 
-## :green_book: PUT /series/:id
+#### PUT /series/:id
 **Description**: Update series
 
-## :green_book: DELETE /series/:id
+#### DELETE /series/:id
 **Description**: Delete series
 
-### 1.4 Instances
+### :green_book: 1.4 Instances
 
 **Base URL:** /api
 
@@ -117,32 +117,55 @@ NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allo
 | PUT /instances/:id  | Update instance |
 | DELETE /instances/:id  | Delete instance |
 
-## :green_book: GET /instances
+#### GET /instances
 **Description**: Find all instances
 
-## :green_book: GET /instances/:id
+#### GET /instances/:id
 **Description**: Find instances by id
 
-## :green_book: GET /instances/:id/tags
+#### GET /instances/:id/tags
 **Description**: Get instance's tags
 
-## :green_book: GET /instances/:id/image
+#### GET /instances/:id/image
 **Description**: Get instance's image
 
-## :green_book: GET /instances/:id/raw
+#### GET /instances/:id/raw
 **Description**: Get instance's raw pixel data in bytes
 
-## :green_book: GET /instances/:instance_id/process/by_plugin/:plugin_id 
+#### GET /instances/:instance_id/process/by_plugin/:plugin_id 
 **Description**: Process instance by plugin
 
-## :green_book: POST /instances
+#### POST /instances
 **Description**: Save instance
 
-## :green_book: PUT /instances/:id
+#### PUT /instances/:id
 **Description**: Update instance
 
-## :green_book: DELETE /instances/:id
+#### DELETE /instances/:id
 **Description**: Delete instance
+
+### :green_book: 1.5 Plugins
+
+**Base URL:** /api
+
+| Resource  | Description  |
+| ------------ | ------------ |
+| GET /plugins  | Find all plugins  |
+| GET /plugins/:id  | Find plugin by id  |
+| POST /plugins | Upload plugin  |
+| DELETE /plugins/:id  | Delete plugin  |
+
+#### GET /plugins
+**Description**: Find all plugins
+
+#### GET /plugins/:id
+**Description**: Find plugin by id
+
+#### POST /plugins
+**Description**: Upload plugin
+
+#### DELETE /plugins/:id
+**Description**: Delete plugin
 
 
 ## :red_circle: 2. Plugins
