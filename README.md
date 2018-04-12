@@ -2,8 +2,14 @@
 NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allows physicians to use state-of-the-art methods of machine learning and neural networks to make a diagnosis based on medical images processing and interpetating.
 
 ## Content
-  1. API
-  2. Plugins
+  ### 1. API
+  	1.1. Patients
+	1.2. Studies
+	1.3. Series
+	1.4. Instances
+	1.5. Plugins
+
+  ### 2. Plugins
 
 ## :red_circle: 1. API
 - [Users](docs/UsersApiDocs.md)
