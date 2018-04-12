@@ -5,7 +5,7 @@ NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allo
   1. API
   2. Plugins
 
-## API
+## :red_circle: 1. API
 - [Users](docs/UsersApiDocs.md)
 - [Patients](docs/PatientsApiDocs.md)
 - [Studies](docs/StudiesApiDocs.md)
@@ -15,7 +15,35 @@ NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allo
 - [Models](docs/ModelsApiDocs.md)
 - [DICOM nodes](docs/DicomNodesApiDocs.md)
 
-## Plugins
+### 1.1. Patients
+
+**Base URL:** /api
+
+| Resource  | Description  |
+| ------------ | ------------ |
+| GET /patients  | Find all patients  |
+| GET /patients/:id  | Find patient by id  |
+| GET /patients/:id/studies  | Find studies for patient  |
+| PUT /patients/:id  | Update patient  |
+| DELETE /patients/:id  | Delete patient  |
+
+## :green_book: GET /patients
+**Description**: Find all patients
+
+## :green_book: GET /patients/:id
+**Description**: Find patient by id
+
+## :green_book: GET /patients/:id/studies
+**Description**: Find patient's studies
+
+## :green_book: PUT /patients/:id
+**Description**: Update patient
+
+## :green_book: DELETE /patients/:id
+**Description**: Delete patient
+
+
+## :red_circle: 2. Plugins
 
 Neurdicom provides API for creating plugins to extend the functionality of DICOM files processing. Plugins should be written in Python and packed as ZIP archive. Plugin should have at least two files 'META.json' and 'plugin.py'. 'META.json' describes the plugin, author and main plugin information. Expected strusture of 'META.json' is shown below:
 
