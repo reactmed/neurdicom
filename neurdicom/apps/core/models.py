@@ -238,6 +238,7 @@ class Plugin(models.Model):
         db_table = 'plugins'
 
     name = models.CharField(verbose_name=_('Name'), max_length=100)
+    display_name = models.CharField(verbose_name=_('Display Name'), default='', max_length=150)
     version = models.CharField(verbose_name=_('Version'), max_length=20)
     author = models.CharField(verbose_name=_('Author'), max_length=100, blank=True, null=True)
     info = models.CharField(verbose_name=_('Information'), max_length=500, blank=True, null=True)
@@ -246,6 +247,7 @@ class Plugin(models.Model):
     tags = JSONField(verbose_name=_('Tags'), blank=True, null=True)
     params = JSONField(verbose_name=_('Parameters'), blank=True, null=True)
     result = JSONField(verbose_name=_('Result'))
+    type = models.CharField(verbose_name=_('Type'), default='ANALYZER', max_length=40)
     plugin = models.FileField(upload_to=plugin_file_path, null=True, blank=True)
 
 
@@ -258,6 +260,7 @@ class DicomNode(models.Model):
     peer_aet_title = models.CharField(verbose_name=_('Peer AET Title'), max_length=100)
     peer_host = models.CharField(verbose_name=_('Peer Host'), max_length=100)
     peer_port = models.IntegerField(verbose_name=_('Peer Port'))
+    protocol = models.CharField(verbose_name=_('Protocol Type'), max_length=20, default='DICOMWEB')
 
 
 class ProcessingResult(models.Model):

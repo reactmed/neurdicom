@@ -100,19 +100,10 @@ class DicomProcessor:
     @staticmethod
     def process(instance: Instance, plugin: Plugin, **params):
         ds = read_file(instance.image)
-        plugin_path = plugin.plugin.path
-        sys.path.append(plugin_path)
-        importlib.invalidate_caches()
-        with ZipFile(plugin.plugin) as zip_file:
-            module_name = zip_file.filelist[0].filename
-            module_name = module_name.replace('/', '').replace('\\', '')
-        plugin_module = importlib.import_module(module_name)
-        importlib.reload(plugin_module)
-        plugin_processor = plugin_module.Plugin()
-        plugin_processor.init()
+        plugin_processor = __import__(plugin.name).Plugin()
+        plugin_processor.initialize()
         result = plugin_processor.process(ds, **params)
         plugin_processor.destroy()
-        sys.path.remove(plugin_path)
         return result
 
 
@@ -177,14 +168,19 @@ def convert_dicom_to_img(ds: Dataset, img_format='jpeg'):
 
 
 def convert_array_to_img(pixel_array: np.ndarray, img_format='jpeg'):
+    img = convert_to_8bit(pixel_array)
+    img = Image.fromarray(img)
+    file = BytesIO()
+    img.save(file, format=img_format)
+    file.seek(0)
+    return file.read()
+
+
+def convert_to_8bit(pixel_array: np.ndarray):
     orig_shape = pixel_array.shape
     flatten_img = pixel_array.reshape((-1))
     img_min = min(flatten_img)
     img_max = max(flatten_img)
     flatten_img = np.floor_divide(flatten_img, (img_max - img_min + 1) / 256, casting='unsafe')
     img = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
-    img = Image.fromarray(img)
-    file = BytesIO()
-    img.save(file, format=img_format)
-    file.seek(0)
-    return file.read()
+    return img
