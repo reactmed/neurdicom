@@ -8,8 +8,11 @@ from apps.core.handlers import *
 from apps.core.utils import DicomProcessor, convert_array_to_img
 from apps.dicom_processing.views import PluginSerializer
 from apps.dicom_ws.serializers import *
+import pip
 
 ECHO_SUCCESS = 0x0000
+REPO_URL = 'git+git://github.com/reactmed/neurdicom-plugins.git'
+
 
 # GET /api/patients
 class PatientListHandler(ListHandler):
@@ -431,7 +434,7 @@ class PluginListHandler(ListHandler):
 
 
 # GET /api/plugins/:id
-class PluginDetailHandler(RetrieveHandler):
+class PluginDetailHandler(RetrieveDestroyHandler):
     """ Find plugin by id
 
     Success
@@ -445,3 +448,32 @@ class PluginDetailHandler(RetrieveHandler):
     """
     queryset = Plugin.objects.all()
     serializer_class = PluginSerializer
+
+    def delete(self, instance_id, *args, **kwargs):
+        plugin = Plugin.objects.get(pk=instance_id)
+        if not plugin.is_installed:
+            self.write_error(500)
+            self.write({
+                'message': 'Plugin not %s installed!'
+            })
+            return
+        pip.main(['uninstall', '--yes', plugin.name])
+        plugin.delete()
+        self.write({
+            'message': 'Plugin %s was removed' % plugin
+        })
+
+
+class InstallPluginHandler(CreateHandlerMixin):
+    def post(self, instance_id, *args, **kwargs):
+        plugin = Plugin.objects.get(pk=instance_id)
+        if plugin.is_installed:
+            self.write_error(500)
+            self.write({
+                'message': 'Plugin is %s installed already!'
+            })
+            return
+        pip.main(['install', '--upgrade', '%s#subdirectory=%s' % (REPO_URL, plugin.name)])
+        plugin.is_installed = True
+        plugin.save()
+        self.write(PluginSerializer(plugin).data)

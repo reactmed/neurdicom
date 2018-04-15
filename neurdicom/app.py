@@ -42,6 +42,7 @@ DICOM_NODE_ECHO_URL = r'/api/dicom_nodes/(\d+)/echo'
 
 PLUGIN_LIST_URL = r'/api/plugins'
 PLUGIN_DETAIL_URL = r'/api/plugins/(\d+)'
+PLUGIN_INSTALL_URL = r'/api/plugins/(\d+)/install'
 
 MEDIA_URL = r'/media/(.*)'
 
@@ -97,6 +98,7 @@ def main():
             # Plugins
             (PLUGIN_DETAIL_URL, PluginDetailHandler),
             (PLUGIN_LIST_URL, PluginListHandler),
+            (PLUGIN_INSTALL_URL, InstallPluginHandler),
 
             # Media download
             (MEDIA_URL, tornado.web.StaticFileHandler, {'path': 'media'})
@@ -127,7 +129,7 @@ def main():
     #
     rest_server = tornado.httpserver.HTTPServer(rest_app)
     rest_server.bind(options.rest_port)
-    rest_server.start(0)
+    rest_server.start()
     print('HTTP server started')
     #
     tornado.ioloop.IOLoop.current().start()
