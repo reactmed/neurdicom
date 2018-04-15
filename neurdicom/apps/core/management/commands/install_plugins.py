@@ -1,5 +1,5 @@
 from importlib.util import find_spec
-from json import load
+from json import loads
 from urllib.request import urlopen
 
 import pip
@@ -25,18 +25,42 @@ class Command(BaseCommand):
                             help='Clear plugins')
         parser.add_argument('--validate', action='store_true', dest='validate',
                             help='Validate plugins')
+        parser.add_argument('--index', action='store_true', dest='index',
+                            help='Index plugins')
 
     def handle(self, *args, **options):
         upgrade = options.get('upgrade', True)
         clear = options.get('clear', False)
         validate = options.get('validate', False)
+        index = options.get('index', False)
         if clear:
             self.stdout.write('Clear plugins')
             for plugin in Plugin.objects.all():
                 plugin.plugin.delete()
                 plugin.delete()
-        g = Github()
+        g = Github('4f9e5c8d6b72c50817cc974b48a48ffaeb35f6d1')
         repo = g.get_organization(ORG).get_repo(REPO)
+        if index:
+            root = repo.get_contents('')
+            for member in root:
+                if member.type == 'dir' and member.path not in options['plugins']:
+                    meta_url = repo.get_contents('%s/META.json' % member.path).download_url
+                    with urlopen(meta_url) as meta_file:
+                        meta = loads(meta_file.read())
+                        plugin = Plugin(
+                            author=meta['author'],
+                            name=meta['name'],
+                            display_name=meta['display_name'],
+                            version=meta.get('version', '1.0'),
+                            info=meta.get('info', None),
+                            docs=meta.get('docs', None),
+                            modalities=meta.get('modalities', []),
+                            tags=meta.get('tags', []),
+                            params=meta.get('params', []),
+                            result=meta['result']
+                        )
+                        plugin.save()
+
         for plugin in options['plugins']:
             if upgrade:
                 pip.main(['install', '--upgrade', '%s#subdirectory=%s' % (REPO_URL, plugin)])
@@ -52,7 +76,7 @@ class Command(BaseCommand):
 
             meta_url = repo.get_contents('%s/META.json' % plugin).download_url
             with urlopen(meta_url) as meta_file:
-                meta = load(meta_file)
+                meta = loads(meta_file.read())
                 plugin = Plugin()
                 plugin.author = meta['author']
                 plugin.name = meta['name']
@@ -64,5 +88,6 @@ class Command(BaseCommand):
                 plugin.tags = meta.get('tags', [])
                 plugin.params = meta.get('params', [])
                 plugin.result = meta['result']
+                plugin.is_installed = True
                 plugin.save()
         self.stdout.write('Installing plugins completed!')

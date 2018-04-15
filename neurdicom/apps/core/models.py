@@ -249,6 +249,7 @@ class Plugin(models.Model):
     result = JSONField(verbose_name=_('Result'))
     type = models.CharField(verbose_name=_('Type'), default='ANALYZER', max_length=40)
     plugin = models.FileField(upload_to=plugin_file_path, null=True, blank=True)
+    is_installed = models.BooleanField(verbose_name=_('Is installed'), default=False)
 
 
 class DicomNode(models.Model):

@@ -19,6 +19,7 @@ from apps.core.utils import DicomProcessor, convert_array_to_img
 class PluginSerializer(ModelSerializer):
     params = SerializerMethodField()
     result = SerializerMethodField()
+    modalities = SerializerMethodField()
 
     def get_params(self, plugin: Plugin):
         if plugin.params:
@@ -30,9 +31,17 @@ class PluginSerializer(ModelSerializer):
             return dict(plugin.result)
         return None
 
+    def get_modalities(self, plugin: Plugin):
+        if plugin.result:
+            return list(plugin.modalities)
+        return None
+
     class Meta:
         model = Plugin
-        fields = ('id', 'author', 'name', 'version', 'info', 'docs', 'params', 'result', 'plugin')
+        fields = (
+            'id', 'author', 'name', 'version', 'info',
+            'docs', 'params', 'result', 'plugin', 'modalities', 'is_installed'
+        )
 
 
 class PluginsListAPIView(ListCreateAPIView):

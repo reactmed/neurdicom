@@ -1,17 +1,15 @@
 from io import BytesIO
 
+import pynetdicom3 as netdicom
 from pydicom import read_file
 from tornado import gen
 
 from apps.core.handlers import *
-from apps.core.models import *
 from apps.core.utils import DicomProcessor, convert_array_to_img
-from apps.dicom_ws.serializers import *
 from apps.dicom_processing.views import PluginSerializer
-import pynetdicom3 as netdicom
+from apps.dicom_ws.serializers import *
 
 ECHO_SUCCESS = 0x0000
-
 
 # GET /api/patients
 class PatientListHandler(ListHandler):
@@ -412,7 +410,7 @@ class DicomNodeEchoHandler(BaseJsonHandler):
 
 
 # GET /api/plugins
-class PluginListHandler(ListCreateHandler):
+class PluginListHandler(ListHandler):
     """ Find plugins
 
     Success
@@ -426,9 +424,14 @@ class PluginListHandler(ListCreateHandler):
     queryset = Plugin.objects.all()
     serializer_class = PluginSerializer
 
+    def get(self, *args, **kwargs):
+        serializer = self.serializer_class(self.queryset.all(), many=True)
+        plugins = serializer.data
+        self.write(plugins)
+
 
 # GET /api/plugins/:id
-class PluginDetailHandler(RetrieveDestroyHandler):
+class PluginDetailHandler(RetrieveHandler):
     """ Find plugin by id
 
     Success
