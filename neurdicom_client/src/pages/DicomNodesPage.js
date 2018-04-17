@@ -3,7 +3,7 @@ import MenuContainer from "../components/common/MenuContainer";
 import {Form, Header, Icon, Modal, Table} from "semantic-ui-react";
 import DicomNodeService from "../services/DicomNodeService";
 import Button from "semantic-ui-react/dist/es/elements/Button/Button";
-import EchoButton from "../components/dicomNodesPage/EchoButton.component";
+import EchoButton from "../components/dicomNodesPage/EchoButton";
 
 const protocolOptions = [
     {

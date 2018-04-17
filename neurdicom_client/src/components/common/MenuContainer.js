@@ -37,9 +37,6 @@ class MenuContainer extends Component {
                             <Button primary>Upload DICOM</Button>
                         </Menu.Item>
                         <Menu.Item>
-                            <Button primary>Upload plugin</Button>
-                        </Menu.Item>
-                        <Menu.Item>
                             <Button color={'red'}>
                                 <Icon name={'shutdown'}/>
                                 Log Out

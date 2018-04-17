@@ -38,6 +38,26 @@ const colorScaleOptions = [
         'key': 'inverse',
         'value': 'inverse',
         'text': 'Inverse'
+    },
+    {
+        'key': 'sobel',
+        'value': 'sobel',
+        'text': 'Sobel Operator'
+    },
+    {
+        'key': 'sharpen',
+        'value': 'sharpen',
+        'text': 'Sharpen'
+    },
+    {
+        'key': 'emboss',
+        'value': 'emboss',
+        'text': 'Emboss'
+    },
+    {
+        'key': 'laplacian',
+        'value': 'laplacian',
+        'text': 'Laplacian'
     }
 ];
 
@@ -54,7 +74,7 @@ const viewModeOptions = [
     }
 ];
 
-class DicomControlPanel extends Component {
+class ControlPanel extends Component {
     constructor(props) {
         super(props);
         this.onHome = this.props.onHome || function () {
@@ -75,24 +95,37 @@ class DicomControlPanel extends Component {
         };
         this.onRotateRight = this.props.onRotateRight || function () {
         };
+        this.onApplyPlugin = this.props.onApplyPlugin || function () {
+        };
         this.setState = this.setState.bind(this);
         this.state = {
-            pluginOptions: []
+            pluginOptions: [],
+            pluginId: null
         }
     }
 
     componentDidMount() {
         PluginsService.findPlugins((plugins) => {
-            const pluginOptions = plugins.map(function (plugin) {
-                return {
-                    key: plugin.id,
-                    value: plugin.id,
-                    text: plugin.info
-                };
-            });
+            const pluginOptions = plugins.filter(plugin => plugin['is_installed'])
+                .map(plugin => {
+                        return {key: plugin.id, value: plugin.id, text: plugin['display_name']};
+                    }
+                );
             this.setState({pluginOptions: pluginOptions})
         });
     }
+
+    onSelectPlugin = (e, o) => {
+        this.setState({
+            pluginId: o.value
+        });
+    };
+
+    onApplyPluginCallback = () => {
+        const onApplyPlugin = this.onApplyPlugin;
+        const pluginId = this.state.pluginId;
+        onApplyPlugin(pluginId);
+    };
 
     render() {
         const pluginOptions = this.state.pluginOptions;
@@ -152,11 +185,12 @@ class DicomControlPanel extends Component {
                     </Button>
                 </Menu.Item>
                 <Menu.Item position={'right'}>
-                    <Dropdown placeholder='Plugin' fluid search selection options={pluginOptions}
+                    <Dropdown ref={ref => this.pluginSelect} placeholder='Plugin' fluid search selection
+                              options={pluginOptions} onChange={this.onSelectPlugin}
                     />
                 </Menu.Item>
                 <Menu.Item>
-                    <Button primary>
+                    <Button primary onClick={this.onApplyPluginCallback}>
                         Apply plugin
                     </Button>
                 </Menu.Item>
@@ -170,7 +204,7 @@ class DicomControlPanel extends Component {
     }
 }
 
-DicomControlPanel.propTypes = {
+ControlPanel.propTypes = {
     onHome: PropTypes.func,
     onPrevInstance: PropTypes.func,
     onNextInstance: PropTypes.func,
@@ -179,8 +213,8 @@ DicomControlPanel.propTypes = {
     onSetColorScale: PropTypes.func,
     onSetViewMode: PropTypes.func,
     onRotateLeft: PropTypes.func,
-    onRotateRight: PropTypes.func
-
+    onRotateRight: PropTypes.func,
+    onApplyPlugin: PropTypes.func
 };
 
-export default DicomControlPanel;
+export default ControlPanel;

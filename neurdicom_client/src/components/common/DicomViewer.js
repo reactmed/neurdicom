@@ -28,6 +28,7 @@ class DicomViewer extends Component {
         const fragShader = document.getElementById(this.props.colorScale + 'Frag').textContent;
 
         new THREE.TextureLoader().load(url, (texture) => {
+            console.log(texture);
             const uniforms = {
                 texture: {
                     type: 't', value: texture
@@ -39,14 +40,14 @@ class DicomViewer extends Component {
                 vertexShader: vertShader,
                 fragmentShader: fragShader
             });
-            this.cube = new THREE.Mesh(geometry, material);
+            this.rect = new THREE.Mesh(geometry, material);
             if (this.props.rotation === 'left')
-                this.cube.rotation.z -= 0.5;
+                this.rect.rotation.z -= 0.5;
             else if (this.props.rotation === 'right')
-                this.cube.rotation.z += 0.5;
+                this.rect.rotation.z += 0.5;
             else
-                this.cube.rotation.z = 0.0;
-            this.scene.add(this.cube);
+                this.rect.rotation.z = 0.0;
+            this.scene.add(this.rect);
             this.camera.position.z = 2;
             this.renderer.render(this.scene, this.camera);
         });
@@ -63,18 +64,18 @@ class DicomViewer extends Component {
                 }
             };
             if (this.props.rotation === 'left')
-                this.cube.rotation.z -= 0.5;
+                this.rect.rotation.z -= 0.5;
             else if (this.props.rotation === 'right')
-                this.cube.rotation.z += 0.5;
+                this.rect.rotation.z += 0.5;
             else
-                this.cube.rotation.z = 0.0;
+                this.rect.rotation.z = 0.0;
             const material = new THREE.ShaderMaterial({
                 uniforms: uniforms,
                 vertexShader: vertShader,
                 fragmentShader: fragShader
             });
-            this.cube.material = material;
-            this.cube.needsUpdate = true;
+            this.rect.material = material;
+            this.rect.needsUpdate = true;
             this.renderer.render(this.scene, this.camera);
         });
     }
