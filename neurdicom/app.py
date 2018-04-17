@@ -30,6 +30,7 @@ SERIES_DETAIL_URL = r'/api/series/(\d+)'
 SERIES_INSTANCES_URL = r'/api/series/(\d+)/instances'
 
 INSTANCE_LIST_URL = r'/api/instances'
+INSTANCE_UPLOAD_URL = r'/api/instances/upload'
 INSTANCE_DETAIL_URL = r'/api/instances/(\d+)'
 INSTANCE_IMAGE_URL = r'/api/instances/(\d+)/image'
 INSTANCE_RAW_URL = r'/api/instances/(\d+)/raw'
@@ -89,6 +90,7 @@ def main():
             (INSTANCE_RAW_URL, InstanceRawHandler),
             (INSTANCE_DETAIL_URL, InstanceDetailHandler),
             (INSTANCE_LIST_URL, InstanceListHandler),
+            (INSTANCE_UPLOAD_URL, InstanceUploadHandler),
 
             # Dicom Nodes
             (DICOM_NODE_DETAIL_URL, DicomNodeDetailHandler),
@@ -129,7 +131,7 @@ def main():
     #
     rest_server = tornado.httpserver.HTTPServer(rest_app)
     rest_server.bind(options.rest_port)
-    rest_server.start()
+    rest_server.start(0)
     print('HTTP server started')
     #
     tornado.ioloop.IOLoop.current().start()

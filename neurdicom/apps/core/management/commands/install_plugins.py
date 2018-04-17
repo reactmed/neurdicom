@@ -38,7 +38,7 @@ class Command(BaseCommand):
             for plugin in Plugin.objects.all():
                 plugin.plugin.delete()
                 plugin.delete()
-        g = Github('4f9e5c8d6b72c50817cc974b48a48ffaeb35f6d1')
+        g = Github('f83002815a59eb622c8ef85f6302e860173a4dec')
         repo = g.get_organization(ORG).get_repo(REPO)
         if index:
             root = repo.get_contents('')

@@ -20,6 +20,12 @@ class PluginSerializer(ModelSerializer):
     params = SerializerMethodField()
     result = SerializerMethodField()
     modalities = SerializerMethodField()
+    tags = SerializerMethodField()
+
+    def get_tags(self, plugin: Plugin):
+        if plugin.tags:
+            return list(plugin.tags)
+        return []
 
     def get_params(self, plugin: Plugin):
         if plugin.params:
@@ -39,8 +45,9 @@ class PluginSerializer(ModelSerializer):
     class Meta:
         model = Plugin
         fields = (
-            'id', 'author', 'name', 'version', 'info',
-            'docs', 'params', 'result', 'plugin', 'modalities', 'is_installed'
+            'id', 'author', 'name', 'display_name', 'version', 'tags',
+            'info', 'docs', 'params', 'result', 'type',
+            'modalities', 'is_installed'
         )
 
 
