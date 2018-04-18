@@ -38,7 +38,7 @@ class Command(BaseCommand):
             for plugin in Plugin.objects.all():
                 plugin.plugin.delete()
                 plugin.delete()
-        g = Github('f83002815a59eb622c8ef85f6302e860173a4dec')
+        g = Github('f90abb94c40454aa75d7bc3e2e77f9ca06a68588')
         repo = g.get_organization(ORG).get_repo(REPO)
         if index:
             root = repo.get_contents('')
@@ -81,7 +81,7 @@ class Command(BaseCommand):
                 plugin.author = meta['author']
                 plugin.name = meta['name']
                 plugin.display_name = meta['display_name']
-                plugin.version = meta['version']
+                plugin.version = meta.get('version', '1.0')
                 plugin.info = meta.get('info', None)
                 plugin.docs = meta.get('docs', None)
                 plugin.modalities = meta.get('modalities', [])
