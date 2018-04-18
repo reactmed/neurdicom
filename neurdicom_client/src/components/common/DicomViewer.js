@@ -28,7 +28,6 @@ class DicomViewer extends Component {
         const fragShader = document.getElementById(this.props.colorScale + 'Frag').textContent;
 
         new THREE.TextureLoader().load(url, (texture) => {
-            console.log(texture);
             const uniforms = {
                 texture: {
                     type: 't', value: texture

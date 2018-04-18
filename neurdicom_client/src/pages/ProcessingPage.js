@@ -6,6 +6,7 @@ import DicomViewer from "../components/processingPage/DicomViewer";
 import ParamsDialog from "../components/processingPage/ParamsDialog";
 import BlendParamsDialog from '../components/processingPage/BlendParamsDialog';
 import * as axios from 'axios';
+import {Dimmer, Loader} from "semantic-ui-react";
 
 
 class ProcessingPage extends Component {
@@ -22,7 +23,8 @@ class ProcessingPage extends Component {
             dialogOpen: false,
             isApplied: false,
             mode: 'blend',
-            alpha: 0.5
+            alpha: 0.5,
+            isPending: false
         };
         this.setState = this.setState.bind(this);
     }
@@ -82,8 +84,8 @@ class ProcessingPage extends Component {
         const pluginId = this.state.plugin['id'];
         console.log(params);
         axios.post(
-            `/api/instances/${instanceId}/process/by_plugin/${pluginId}`, 
-            JSON.stringify(params), 
+            `/api/instances/${instanceId}/process/by_plugin/${pluginId}`,
+            JSON.stringify(params),
             {
                 responseType: 'blob',
                 headers: {
@@ -96,11 +98,21 @@ class ProcessingPage extends Component {
             reader.onload = (e) => {
                 const mask = new Uint8Array(e.target.result);
                 this.setState({
-                    mask: mask
+                    mask: mask,
+                    isPending: false
                 });
             };
             reader.readAsArrayBuffer(resp.data);
+        }).catch((resp) => {
+            alert('Error in processing!');
+            this.setState({
+                isPending: false
+            });
         });
+        console.log('IS PENDING');
+        this.setState({
+            isPending: true
+        })
     };
 
     render() {
@@ -110,7 +122,8 @@ class ProcessingPage extends Component {
         const mode = this.state.mode;
         const mask = this.state.mask;
         let alpha = this.state.alpha;
-        if(alpha === undefined || alpha === null || alpha === '')
+        const isPending = this.state.isPending;
+        if (alpha === undefined || alpha === null || alpha === '')
             alpha = 0.5;
         alpha = parseFloat(alpha);
         const colorScale = this.state.colorScale;
@@ -126,20 +139,47 @@ class ProcessingPage extends Component {
                 mask: mask,
                 alpha: alpha
             };
-            return (
-                <div style={{
-                    background: 'black'
-                }}>
-                    <ControlPanel onHome={this.onHome} onSetColorScale={this.setColorScale}
-                                  onApplyPlugin={this.onOpenDialog} onSetMode={this.onSetMode}
-                                  onSetAlpha={this.onSetAlpha} alpha={this.state.alpha}/>
-                    <DicomViewer {...viewerProps}/>
-                    <ParamsDialog plugin={plugin}
-                                  open={this.state.dialogOpen}
-                                  onClose={this.onCloseDialog}
-                                  onApply={this.onApply}/>
-                </div>
-            );
+            if (isPending) {
+                return (
+                    <div style={{
+                        background: 'black'
+                    }}>
+
+
+                        <ControlPanel onHome={this.onHome} onSetColorScale={this.setColorScale}
+                                      onApplyPlugin={this.onOpenDialog} onSetMode={this.onSetMode}
+                                      onSetAlpha={this.onSetAlpha} alpha={this.state.alpha}/>
+                        <Dimmer active>
+                            <Loader active>
+                                Processing takes some time...
+                            </Loader>
+                        </Dimmer>
+                        <DicomViewer {...viewerProps}/>
+                        <ParamsDialog plugin={plugin}
+                                      open={this.state.dialogOpen}
+                                      onClose={this.onCloseDialog}
+                                      onApply={this.onApply}/>
+
+                    </div>
+                );
+            }
+            else {
+                return (
+                    <div style={{
+                        background: 'black'
+                    }}>
+                        <ControlPanel onHome={this.onHome} onSetColorScale={this.setColorScale}
+                                      onApplyPlugin={this.onOpenDialog} onSetMode={this.onSetMode}
+                                      onSetAlpha={this.onSetAlpha} alpha={this.state.alpha}/>
+                        <DicomViewer {...viewerProps}/>
+                        <ParamsDialog plugin={plugin}
+                                      open={this.state.dialogOpen}
+                                      onClose={this.onCloseDialog}
+                                      onApply={this.onApply}/>
+                    </div>
+                );
+            }
+
         }
         else {
             return (
@@ -147,7 +187,8 @@ class ProcessingPage extends Component {
                     background: 'black'
                 }}>
                     <ControlPanel onHome={this.onHome} onSetColorScale={this.setColorScale}
-                                  onApplyPlugin={this.onOpenDialog} onSetAlpha={this.onSetAlpha} onSetMode={this.onSetMode}/>
+                                  onApplyPlugin={this.onOpenDialog} onSetAlpha={this.onSetAlpha}
+                                  onSetMode={this.onSetMode}/>
                 </div>
             );
         }

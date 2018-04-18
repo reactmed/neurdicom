@@ -12,22 +12,16 @@ class DicomViewer extends Component {
         this.camera.aspect = this.node.clientWidth / this.node.clientHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(this.node.clientWidth, this.node.clientHeight);
-    }
-
-    static createTextureFromData(width, height, data) {
-        data = new Uint8Array([255, 0, 0, 1]);
-        return new THREE.DataTexture(data, 1, 1, THREE.RGBAFormat, THREE.UnsignedByteType,
-            THREE.UVMapping);
     };
 
-    static fillCanvasFromData(data, w, h){
-        var canvas = document.createElement('canvas');
+    static fillCanvasFromData(data, w, h) {
+        const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
-        var ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d');
         const imgData = ctx.getImageData(0, 0, w, h);
         const array = imgData.data;
-        for(let i = 0; i < w * h; i++){
+        for (let i = 0; i < w * h; i++) {
             array[i * 4] = data[i];
             array[i * 4 + 1] = data[i];
             array[i * 4 + 2] = data[i];
@@ -37,9 +31,16 @@ class DicomViewer extends Component {
         return canvas;
     }
 
+    static textureFromCanvas(data, w, h) {
+        return new THREE.CanvasTexture(DicomViewer.fillCanvasFromData(data, w, h));
+    }
+
     componentDidMount() {
         const original = this.props.original;
         const instance = this.props.instance;
+        const mask = this.props.mask;
+        const mode = this.props.mode;
+        const alpha = this.props.alpha;
         const colorScale = this.props.colorScale;
         const w = instance['columns'];
         const h = instance['rows'];
@@ -52,22 +53,40 @@ class DicomViewer extends Component {
 
         this.node.addEventListener('resize', this.onWindowResize, false);
 
-        const vertShader = document.getElementById('mainVert').textContent;
-        const fragShader = document.getElementById(colorScale + 'Frag').textContent;
+        let vertShader = null;
+        let fragShader = null;
+        let uniforms = null;
+        if (mask) {
+            vertShader = document.getElementById('mainVert').textContent;
+            fragShader = document.getElementById(mode + 'Frag').textContent;
+            uniforms = {
+                texture: {
+                    type: 't', value: new THREE.CanvasTexture(DicomViewer.fillCanvasFromData(original, w, h))
+                },
+                mask: {
+                    type: 't', value: new THREE.CanvasTexture(DicomViewer.fillCanvasFromData(mask, w, h))
+                },
+                alpha: {
+                    value: alpha
+                }
+            };
+        }
+        else {
+            vertShader = document.getElementById('mainVert').textContent;
+            fragShader = document.getElementById(colorScale + 'Frag').textContent;
 
-        const uniforms = {
-            texture: {
-                type: 't', value: new THREE.CanvasTexture(DicomViewer.fillCanvasFromData(original, w, h))
-            }
-        };
+            uniforms = {
+                texture: {
+                    type: 't', value: DicomViewer.textureFromCanvas(original, w, h)
+                }
+            };
+        }
         const geometry = new THREE.PlaneGeometry(3, 3);
         const material = new THREE.ShaderMaterial({
             uniforms: uniforms,
             vertexShader: vertShader,
             fragmentShader: fragShader
         });
-
-// used the buffer to create a DataTexture
 
         this.rect = new THREE.Mesh(geometry, material);
         this.scene.add(this.rect);
@@ -88,8 +107,6 @@ class DicomViewer extends Component {
         if (mask) {
             const vertShader = document.getElementById('mainVert').textContent;
             const fragShader = document.getElementById(mode + 'Frag').textContent;
-            console.log('MASK');
-            console.log(fragShader);
             const uniforms = {
                 texture: {
                     type: 't', value: new THREE.CanvasTexture(DicomViewer.fillCanvasFromData(original, w, h))

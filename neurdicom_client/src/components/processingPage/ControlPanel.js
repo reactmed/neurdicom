@@ -63,14 +63,29 @@ const colorScaleOptions = [
 
 const viewModeOptions = [
     {
+        'key': 'main',
+        'value': 'main',
+        'text': 'No Mask'
+    },
+    {
         'key': 'blend',
         'value': 'blend',
         'text': 'Blend'
     },
     {
+        'key': 'mix',
+        'value': 'mix',
+        'text': 'Mix'
+    },
+    {
         'key': 'crop',
         'value': 'crop',
         'text': 'Crop Segment'
+    },
+    {
+        'key': 'contour',
+        'value': 'contour',
+        'text': 'Contour Segment'
     }
 ];
 
