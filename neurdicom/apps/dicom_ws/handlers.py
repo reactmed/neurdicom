@@ -1,7 +1,8 @@
 from io import BytesIO, StringIO
 
 import pynetdicom3 as netdicom
-from pydicom import read_file
+from pydicom.uid import *
+from pydicom import read_file, FileDataset
 from tornado import gen
 from apps.core.handlers import *
 from apps.core.utils import DicomProcessor, convert_array_to_img, DicomSaver, convert_to_8bit
@@ -484,3 +485,28 @@ class InstallPluginHandler(CreateHandlerMixin):
         plugin.is_installed = True
         plugin.save()
         self.write(PluginSerializer(plugin).data)
+
+
+class DICOMServer(netdicom.AE):
+
+    def __init__(self, *args, **kwargs):
+        super(DICOMServer, self).__init__(*args, **kwargs)
+
+    def on_c_echo(self):
+        logging.info('C-Echo succeeded')
+        return 0x0000
+
+    def on_c_store(self, ds: Dataset):
+        logging.info('C-Store processing')
+        file_meta = Dataset()
+        file_meta.TransferSyntaxUID = ImplicitVRLittleEndian
+        file_meta.MediaStorageSOPClassUID = ds.SOPClassUID
+        file_meta.MediaStorageSOPInstanceUID = ds.SOPInstanceUID
+        file_meta.ImplementationClassUID = '1.3.6.1.4.1.9590.100.1.0.100.4.0'
+        fds = FileDataset(None, {}, file_meta=file_meta, preamble=b'\0' * 128)
+        fds.update(ds)
+        fds.is_little_endian = True
+        fds.is_implicit_VR = True
+        DicomSaver.save(fds)
+        logging.info('C-Store succeeded')
+        return 0x0000
