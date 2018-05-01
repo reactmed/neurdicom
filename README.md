@@ -210,3 +210,80 @@ class Plugin:
     def destroy(self):
         print('Destroy method called')
 ```
+Also you can write plugins in C/C++. All C/C++ plugins should be createad as a shared library and compiled at the specific target. Library should contain exposed extern C-functions to provide an access to plugin class. For example:
+
+Our library contains 4 files: library.h, library.cpp, plugin.h, plugin.cpp
+library.h and library.cpp contain defintions of C-functions which provide access to plugin initialization, processing and destruction:
+
+library.h
+```c++
+#include "Plugin.h"
+
+extern "C" Plugin* InitPlugin();
+extern "C" double* Process(Plugin *plugin, double *img, int width, int height, const char* params);
+extern "C" void DestroyPlugin(Plugin* plugin);
+```
+
+library.cpp
+```c++
+#include "library.h"
+extern "C" {
+
+    Plugin* InitPlugin(){
+        return new Plugin;
+    }
+
+    double* Process(Plugin *plugin, double *img, int width, int height, const char* params) {
+        return plugin->process(img, width, height, params);
+    }
+
+    void DestroyPlugin(Plugin *plugin){
+        delete plugin;
+    }
+}
+```
+
+Plugin class should contain constructor, processing function and destructor. Processing function should accept at least 4 parameters: image as double array, width, height and additional parameters passed as json string. 
+
+plugin.h
+```c++
+class Plugin {
+public:
+    Plugin();
+    double *process(double *, int, int, const char *params);
+    ~Plugin();
+};
+```
+
+plugin.cpp
+```c++
+#include "Plugin.h"
+#include "json.hpp"
+#include <iostream>
+
+#include "json.hpp"
+
+// for convenience
+using json = nlohmann::json;
+
+using namespace std;
+
+double *Plugin::process(double *img, int w, int h, const char *params) {
+    cout << "Processing image" << endl;
+    cout << params << endl;
+    auto j = json::parse(params);
+    double factor = j["factor"].get<double>();
+    for (int r = 0; r < w * h; r++) {
+        img[r] = factor - img[r];
+    }
+    return img;
+}
+
+Plugin::Plugin() {
+    cout << "Initializing plugin" << endl;
+}
+
+Plugin::~Plugin() {
+    cout << "Destroying plugin" << endl;
+}
+```
