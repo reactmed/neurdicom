@@ -287,3 +287,7 @@ Plugin::~Plugin() {
     cout << "Destroying plugin" << endl;
 }
 ```
+
+## References
+
+ 1. http://bikulov.org/blog/2013/10/01/using-cuda-c-plus-plus-functions-in-python-via-star-dot-so-and-ctypes/ 
