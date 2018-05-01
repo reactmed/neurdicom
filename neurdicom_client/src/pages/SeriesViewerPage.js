@@ -1,11 +1,10 @@
 import React, {Component} from 'react';
 import {
-    Button, Grid, Icon, Menu, Modal
+    Grid
 } from "semantic-ui-react";
 import DicomService from "../services/DicomService";
 import DicomViewer from "../components/common/DicomViewer";
-import Dropdown from "semantic-ui-react/dist/es/modules/Dropdown/Dropdown";
-import DicomControlPanel from "../components/seriesViewerPage/DicomControlPanel";
+import ControlPanel from "../components/seriesViewerPage/ControlPanel";
 
 
 class SeriesViewerPage extends Component {
@@ -27,16 +26,6 @@ class SeriesViewerPage extends Component {
             animationId: undefined
         };
         this.setState = this.setState.bind(this);
-        this.prevInstance = this.prevInstance.bind(this);
-        this.nextInstance = this.nextInstance.bind(this);
-        this.showTags = this.showTags.bind(this);
-        this.onKeyPress = this.onKeyPress.bind(this);
-        this.play = this.play.bind(this);
-        this.stop = this.stop.bind(this);
-        this.rotateLeft = this.rotateLeft.bind(this);
-        this.rotateRight = this.rotateRight.bind(this);
-        this.setColorScale = this.setColorScale.bind(this);
-        this.setViewMode = this.setViewMode.bind(this);
     }
 
     componentWillMount() {
@@ -49,7 +38,7 @@ class SeriesViewerPage extends Component {
     }
 
 
-    play() {
+    play = () => {
         if (!this.state.animationId) {
             const nextInstance = this.nextInstance;
             const state = this.state;
@@ -66,18 +55,18 @@ class SeriesViewerPage extends Component {
             state.animation = true;
             state.animationId = requestAnimationFrame(animate);
         }
-    }
+    };
 
-    stop() {
+    stop = () => {
         if (this.state.animationId) {
             const state = this.state;
             state.animation = false;
             cancelAnimationFrame(state.animationId);
             state.animationId = undefined;
         }
-    }
+    };
 
-    prevInstance() {
+    prevInstance = () => {
         const currentInstanceId = this.state.index;
         const instancesCount = (this.state.instances || []).length;
         if (instancesCount === 0)
@@ -88,9 +77,9 @@ class SeriesViewerPage extends Component {
         else {
             this.setState({index: currentInstanceId - 1, rotation: null});
         }
-    }
+    };
 
-    nextInstance() {
+    nextInstance = () => {
         const currentInstanceId = this.state.index;
         const instancesCount = (this.state.instances || []).length;
         if (instancesCount === 0)
@@ -99,9 +88,9 @@ class SeriesViewerPage extends Component {
             this.setState({index: 0, rotation: null});
         else
             this.setState({index: currentInstanceId + 1, rotation: null});
-    }
+    };
 
-    showTags() {
+    showTags = () => {
         const instances = this.state.instances;
         if (instances) {
             const instanceId = instances[this.state.index]['id'];
@@ -109,23 +98,29 @@ class SeriesViewerPage extends Component {
                 this.setState({instanceTags: tags});
             });
         }
-    }
+    };
 
-    rotateLeft() {
+    rotateLeft = () => {
         this.setState({rotation: 'left'});
-    }
+    };
 
-    rotateRight() {
+    rotateRight = () => {
         this.setState({rotation: 'right'});
-    }
+    };
 
-    setColorScale(e, d) {
+    setColorScale = (e, d) => {
         this.setState({colorScale: d.value})
-    }
+    };
 
-    setViewMode(e, d) {
+    setViewMode = (e, d) => {
         this.setState({viewMode: d.value})
     }
+
+    onApplyPlugin = (pluginId) => {
+        const instance = this.state.instances[this.state.index];
+        console.log(instance);
+        this.props.history.push(`/instances/${instance['id']}/process/${pluginId}`);
+    };
 
 
     render() {
@@ -146,11 +141,13 @@ class SeriesViewerPage extends Component {
                     <div style={{
                         background: 'black'
                     }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
-                        <DicomControlPanel onHome={() => {
+                        <ControlPanel onHome={() => {
                             this.props.history.push('/studies')
                         }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
-                                           onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
-                                           onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
+                                      onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
+                                      onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}
+                                      onApplyPlugin={this.onApplyPlugin}
+                        />
                         <DicomViewer {...viewerProps}/>
                     </div>
                 );
@@ -169,11 +166,13 @@ class SeriesViewerPage extends Component {
                     <div style={{
                         background: 'black'
                     }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
-                        <DicomControlPanel onHome={() => {
+                        <ControlPanel onHome={() => {
                             this.props.history.push('/studies')
                         }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
-                                           onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
-                                           onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
+                                      onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
+                                      onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}
+                                      onApplyPlugin={this.onApplyPlugin}
+                        />
                         <Grid columns={'equal'}>
                             <Grid.Row>
                                 <Grid.Column>
@@ -193,24 +192,26 @@ class SeriesViewerPage extends Component {
                 <div style={{
                     background: 'black'
                 }} tabIndex={'0'} onKeyDown={(event) => this.onKeyPress(event)}>
-                    <DicomControlPanel onHome={() => {
+                    <ControlPanel onHome={() => {
                         this.props.history.push('/studies')
                     }} onNextInstance={this.nextInstance} onPrevInstance={this.prevInstance}
-                                       onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
-                                       onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}/>
+                                  onSetColorScale={this.setColorScale} onRotateLeft={this.rotateLeft}
+                                  onRotateRight={this.rotateRight} onSetViewMode={this.setViewMode}
+                                  onApplyPlugin={this.onApplyPlugin}
+                    />
                 </div>
             );
         }
     }
 
-    onKeyPress(event) {
+    onKeyPress = (event) => {
         if (event.key === 'ArrowLeft') {
             this.prevInstance();
         }
         else if (event.key === 'ArrowRight') {
             this.nextInstance();
         }
-    }
+    };
 }
 
 

@@ -3,8 +3,8 @@ import React, {Component} from "react";
 import PluginsService from "../services/PluginsService";
 import {Button, Divider, Dropdown, Form, Header, Message, Segment, Select} from "semantic-ui-react";
 import 'semantic-ui-css/semantic.min.css';
+import PluginItem from "../components/pluginsPage/PluginItem";
 import * as axios from 'axios';
-import FileSaver from 'file-save';
 
 const patientMatcherOptions = [
     {key: 'EXACT', text: 'Exact equals', value: 'EXACT'},
@@ -29,20 +29,38 @@ class PluginsPage extends Component {
             plugins: []
         };
         this.setState = this.setState.bind(this);
-        this.downloadPlugin = this.downloadPlugin.bind(this);
     }
 
-    componentWillMount() {
+    componentWillMount = () => {
         PluginsService.findPlugins(plugins => {
             this.setState({plugins: plugins});
         });
-    }
+    };
 
-    downloadPlugin(pluginUrl) {
-        // axios.get(pluginUrl, {responseType: 'arraybuffer'}).then(response => {
-        //     FileSaver.saveAs(response.data, 'plugin.zip');
-        // })
-    }
+    onDeletePlugin = (plugin) => {
+        axios.delete(
+            `/api/plugins/${plugin['id']}`
+        ).then((response) => {
+            PluginsService.findPlugins(plugins => {
+                this.setState({plugins: plugins});
+            });
+        }).catch((err) => {
+            alert(`Plugin "${plugin['display_name']}" could not uninstalled!`);
+        })
+    };
+
+    onInstallPlugin = (plugin) => {
+        axios.post(
+            `/api/plugins/${plugin['id']}/install`
+        ).then((response) => {
+            PluginsService.findPlugins(plugins => {
+                this.setState({plugins: plugins});
+            });
+        }).catch((err) => {
+            alert(`Plugin "${plugin['display_name']}" could not installed!`);
+            this.setState({});
+        })
+    };
 
     render() {
         console.log(this.state.plugins);
@@ -73,20 +91,8 @@ class PluginsPage extends Component {
                         {
                             this.state.plugins.map(plugin => {
                                 return (
-                                    <Segment>
-                                        <Header as='h1'>{plugin['name']}
-                                        </Header>
-                                        <b>Author: </b>{plugin['author']}
-                                        <br/>
-                                        <b>Info: </b>{plugin['info']}
-                                        <Divider/>
-                                        <div style={{textAlign: 'right'}}>
-                                            <Button positive>
-                                                <a style={{color: 'white'}}
-                                                   href={`http://localhost:8080${plugin['plugin']}`}>Download</a>
-                                            </Button>
-                                        </div>
-                                    </Segment>
+                                    <PluginItem plugin={plugin} onDeletePlugin={this.onDeletePlugin}
+                                                onInstallPlugin={this.onInstallPlugin}/>
                                 )
                             })
                         }

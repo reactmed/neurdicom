@@ -1,14 +1,11 @@
-import importlib
 import json
+from io import BytesIO
 from json import JSONEncoder
 from zipfile import ZipFile
 
-import sys
-
 import numpy as np
 from PIL import Image
-from io import BytesIO
-from pydicom import Dataset, Sequence
+from pydicom import Sequence
 from pydicom import read_file
 from pydicom.dataelem import PersonName
 from pydicom.multival import MultiValue
@@ -20,22 +17,28 @@ from apps.core.models import *
 class DicomSaver:
 
     @classmethod
-    def save(cls, fp):
-        ds: Dataset = read_file(fp)
-        if isinstance(fp, str):
-            fp = open(fp, 'rb')
+    def save(cls, img):
+        if isinstance(img, Dataset):
+            ds: Dataset = img
+            img = BytesIO()
+            img.seek(0)
+            ds.save_as(img)
+        else:
+            ds: Dataset = read_file(img)
+        if isinstance(img, str):
+            img = open(img, 'rb')
         if Instance.objects.filter(sop_instance_uid=ds.SOPInstanceUID).exists():
             instance = Instance.objects.get(sop_instance_uid=ds.SOPInstanceUID)
             instance.image.delete()
-            instance.image.save('', fp)
+            instance.image.save('', img)
             return instance
         elif Series.objects.filter(series_instance_uid=ds.SeriesInstanceUID).exists():
             series = Series.objects.get(series_instance_uid=ds.SeriesInstanceUID)
             instance = Instance.from_dataset(ds=ds)
             instance.series = series
-            instance.image.save('', fp)
+            instance.image.save('', img)
             instance.save()
-            fp.close()
+            img.close()
             return instance
         elif Study.objects.filter(study_instance_uid=ds.StudyInstanceUID).exists():
             study = Study.objects.get(study_instance_uid=ds.StudyInstanceUID)
@@ -44,9 +47,9 @@ class DicomSaver:
             series.save()
             instance = Instance.from_dataset(ds=ds)
             instance.series = series
-            instance.image.save('', fp)
+            instance.image.save('', img)
             instance.save()
-            fp.close()
+            img.close()
             return instance
 
         if ds.PatientID is None or ds.PatientID == '':
@@ -60,9 +63,9 @@ class DicomSaver:
             series.save()
             instance = Instance.from_dataset(ds=ds)
             instance.series = series
-            instance.image.save('', fp)
+            instance.image.save('', img)
             instance.save()
-            fp.close()
+            img.close()
             return instance
         elif Patient.objects.filter(patient_id=ds.PatientID):
             patient = Patient.objects.get(patient_id=ds.PatientID)
@@ -74,9 +77,9 @@ class DicomSaver:
             series.save()
             instance = Instance.from_dataset(ds=ds)
             instance.series = series
-            instance.image.save('', fp)
+            instance.image.save('', img)
             instance.save()
-            fp.close()
+            img.close()
             return instance
         else:
             patient = Patient.from_dataset(ds=ds)
@@ -89,9 +92,9 @@ class DicomSaver:
             series.save()
             instance = Instance.from_dataset(ds=ds)
             instance.series = series
-            instance.image.save('', fp)
+            instance.image.save('', img)
             instance.save()
-            fp.close()
+            img.close()
             return instance
 
 
@@ -100,19 +103,10 @@ class DicomProcessor:
     @staticmethod
     def process(instance: Instance, plugin: Plugin, **params):
         ds = read_file(instance.image)
-        plugin_path = plugin.plugin.path
-        sys.path.append(plugin_path)
-        importlib.invalidate_caches()
-        with ZipFile(plugin.plugin) as zip_file:
-            module_name = zip_file.filelist[0].filename
-            module_name = module_name.replace('/', '').replace('\\', '')
-        plugin_module = importlib.import_module(module_name)
-        importlib.reload(plugin_module)
-        plugin_processor = plugin_module.Plugin()
-        plugin_processor.init()
+        plugin_processor = __import__(plugin.name).Plugin()
+        plugin_processor.initialize()
         result = plugin_processor.process(ds, **params)
         plugin_processor.destroy()
-        sys.path.remove(plugin_path)
         return result
 
 
@@ -177,14 +171,19 @@ def convert_dicom_to_img(ds: Dataset, img_format='jpeg'):
 
 
 def convert_array_to_img(pixel_array: np.ndarray, img_format='jpeg'):
+    img = convert_to_8bit(pixel_array)
+    img = Image.fromarray(img)
+    file = BytesIO()
+    img.save(file, format=img_format)
+    file.seek(0)
+    return file.read()
+
+
+def convert_to_8bit(pixel_array: np.ndarray):
     orig_shape = pixel_array.shape
     flatten_img = pixel_array.reshape((-1))
     img_min = min(flatten_img)
     img_max = max(flatten_img)
     flatten_img = np.floor_divide(flatten_img, (img_max - img_min + 1) / 256, casting='unsafe')
     img = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
-    img = Image.fromarray(img)
-    file = BytesIO()
-    img.save(file, format=img_format)
-    file.seek(0)
-    return file.read()
+    return img

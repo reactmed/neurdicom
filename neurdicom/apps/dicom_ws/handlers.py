@@ -1,16 +1,17 @@
-from io import BytesIO
+from io import BytesIO, StringIO
 
-from pydicom import read_file
-from tornado import gen
-
-from apps.core.handlers import *
-from apps.core.models import *
-from apps.core.utils import DicomProcessor, convert_array_to_img
-from apps.dicom_ws.serializers import *
-from apps.dicom_processing.views import PluginSerializer
 import pynetdicom3 as netdicom
+from pydicom.uid import *
+from pydicom import read_file, FileDataset
+from tornado import gen
+from apps.core.handlers import *
+from apps.core.utils import DicomProcessor, convert_array_to_img, DicomSaver, convert_to_8bit
+from apps.dicom_processing.views import PluginSerializer
+from apps.dicom_ws.serializers import *
+import pip
 
 ECHO_SUCCESS = 0x0000
+REPO_URL = 'git+git://github.com/reactmed/neurdicom-plugins.git'
 
 
 # GET /api/patients
@@ -205,6 +206,12 @@ class InstanceListHandler(ListHandler):
     serializer_class = InstanceSerializer
 
 
+class InstanceUploadHandler(BaseNeurDicomHandler):
+    def post(self, *args, **kwargs):
+        for name in self.request.files:
+            DicomSaver.save(BytesIO(self.request.files[name][0]['body']))
+
+
 # GET /api/instances/:id
 class InstanceDetailHandler(RetrieveHandler):
     """ Find instance by id
@@ -224,7 +231,7 @@ class InstanceDetailHandler(RetrieveHandler):
 
 # POST /api/instances/:id/process/by_plugin/:id
 
-class InstanceProcessHandler(BaseNeurDicomHandler):
+class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
     """ Process an instances with specified plugin (or filter)
 
     Success
@@ -238,50 +245,48 @@ class InstanceProcessHandler(BaseNeurDicomHandler):
         - 403 - User has not permissions for retrieving patients
     """
 
-    def prepare(self):
-        super(BaseNeurDicomHandler, self).prepare()
-        if self.request.body:
-            try:
-                json_data = json.loads(self.request.body)
-                self.request.arguments.update(json_data)
-            except ValueError:
-                self.send_error(400, message='Body is not JSON deserializable')
-
-    def _convert(self, v, t):
-        if t == 'int':
-            return int(v)
-        else:
-            return float(v)
+    # def prepare(self):
+    #     super(BaseNeurDicomHandler, self).prepare()
+    #     if self.request.body:
+    #         try:
+    #             json_data = json.loads(self.request.body)
+    #             self.request.arguments.update(json_data)
+    #         except ValueError:
+    #             self.send_error(400, message='Body is not JSON deserializable')
+    #
+    # def _convert(self, v, t):
+    #     if t == 'int':
+    #         return int(v)
+    #     else:
+    #         return float(v)
 
     @gen.coroutine
-    def get(self, instance_id, by_plugin_id, *args, **kwargs):
+    def post(self, instance_id, by_plugin_id, *args, **kwargs):
         instance = Instance.objects.get(pk=instance_id)
         plugin = Plugin.objects.get(pk=by_plugin_id)
-        params = {}
-        for k in plugin.params:
-            if plugin.params[k].get('is_array', False):
-                v = self.get_query_arguments(k, None)
-            else:
-                v = self.get_query_argument(k, None)
-            if v is not None:
-                if isinstance(v, list) or isinstance(v, tuple):
-                    params[k] = [self._convert(item, plugin.params[k]['type']) for item in v]
-                else:
-                    params[k] = self._convert(v, plugin.params[k]['type'])
+        params = self.request.arguments
+        # for k in plugin.params:
+        #     if plugin.params[k].get('is_array', False):
+        #         v = self.get_query_arguments(k, None)
+        #     else:
+        #         v = self.get_query_argument(k, None)
+        #     if v is not None:
+        #         if isinstance(v, list) or isinstance(v, tuple):
+        #             params[k] = [self._convert(item, plugin.params[k]['type']) for item in v]
+        #         else:
+        #             params[k] = self._convert(v, plugin.params[k]['type'])
 
         result = DicomProcessor.process(instance, plugin, **params)
         if plugin.result['type'] == 'IMAGE':
             if isinstance(result, BytesIO):
                 result = result.getvalue()
             else:
-                result = convert_array_to_img(result)
-            self.set_header('Content-Type', 'image/jpeg')
-            self.write(result)
+                result = convert_to_8bit(result).tobytes()
+            BaseBytesHandler.write(self, result)
         elif plugin.result['type'] == 'JSON':
             if isinstance(result, dict):
                 result = json.dumps(result)
-            self.set_header('Content-Type', 'application/json')
-            self.write(result)
+            BaseJsonHandler.write(self, result)
         else:
             self.send_error(500, message='Unknown result type')
 
@@ -344,8 +349,12 @@ class InstanceRawHandler(BaseBytesHandler):
 
     @gen.coroutine
     def get(self, instance_id, *args, **kwargs):
+        img_format = self.get_query_argument('format', 'LUM_8')
         instance = Instance.objects.get(pk=instance_id)
-        yield self.write(read_file(instance.image).PixelData)
+        if img_format == 'LUM_8':
+            yield self.write(convert_to_8bit(read_file(instance.image).pixel_array).tobytes())
+        else:
+            yield self.write(read_file(instance.image).PixelData)
 
 
 # GET /api/dicom_nodes
@@ -412,7 +421,7 @@ class DicomNodeEchoHandler(BaseJsonHandler):
 
 
 # GET /api/plugins
-class PluginListHandler(ListCreateHandler):
+class PluginListHandler(ListHandler):
     """ Find plugins
 
     Success
@@ -425,6 +434,11 @@ class PluginListHandler(ListCreateHandler):
     """
     queryset = Plugin.objects.all()
     serializer_class = PluginSerializer
+
+    def get(self, *args, **kwargs):
+        serializer = self.serializer_class(self.queryset.all(), many=True)
+        plugins = serializer.data
+        self.write(plugins)
 
 
 # GET /api/plugins/:id
@@ -442,3 +456,57 @@ class PluginDetailHandler(RetrieveDestroyHandler):
     """
     queryset = Plugin.objects.all()
     serializer_class = PluginSerializer
+
+    def delete(self, instance_id, *args, **kwargs):
+        plugin = Plugin.objects.get(pk=instance_id)
+        if not plugin.is_installed:
+            self.write_error(500)
+            self.write({
+                'message': 'Plugin not %s installed!'
+            })
+            return
+        pip.main(['uninstall', '--yes', plugin.name])
+        plugin.delete()
+        self.write({
+            'message': 'Plugin %s was removed' % plugin
+        })
+
+
+class InstallPluginHandler(CreateHandlerMixin):
+    def post(self, instance_id, *args, **kwargs):
+        plugin = Plugin.objects.get(pk=instance_id)
+        if plugin.is_installed:
+            self.write_error(500)
+            self.write({
+                'message': 'Plugin is %s installed already!'
+            })
+            return
+        pip.main(['install', '--upgrade', '%s#subdirectory=%s' % (REPO_URL, plugin.name)])
+        plugin.is_installed = True
+        plugin.save()
+        self.write(PluginSerializer(plugin).data)
+
+
+class DICOMServer(netdicom.AE):
+
+    def __init__(self, *args, **kwargs):
+        super(DICOMServer, self).__init__(*args, **kwargs)
+
+    def on_c_echo(self):
+        logging.info('C-Echo succeeded')
+        return 0x0000
+
+    def on_c_store(self, ds: Dataset):
+        logging.info('C-Store processing')
+        file_meta = Dataset()
+        file_meta.TransferSyntaxUID = ImplicitVRLittleEndian
+        file_meta.MediaStorageSOPClassUID = ds.SOPClassUID
+        file_meta.MediaStorageSOPInstanceUID = ds.SOPInstanceUID
+        file_meta.ImplementationClassUID = '1.3.6.1.4.1.9590.100.1.0.100.4.0'
+        fds = FileDataset(None, {}, file_meta=file_meta, preamble=b'\0' * 128)
+        fds.update(ds)
+        fds.is_little_endian = True
+        fds.is_implicit_VR = True
+        DicomSaver.save(fds)
+        logging.info('C-Store succeeded')
+        return 0x0000

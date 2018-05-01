@@ -34,10 +34,7 @@ class MenuContainer extends Component {
                         <Menu.Item as={Link} to='/dicom_nodes' name='DICOM nodes'
                                    active={this.props.activeItem === 'DICOM nodes'}/>
                         <Menu.Item position='right'>
-                            <Button primary>Upload DICOM</Button>
-                        </Menu.Item>
-                        <Menu.Item>
-                            <Button primary>Upload plugin</Button>
+                            <Button as={Link} to={'/dicom/upload'} primary>Upload DICOM</Button>
                         </Menu.Item>
                         <Menu.Item>
                             <Button color={'red'}>

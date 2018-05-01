@@ -1,9 +1,13 @@
 #!/usr/bin/env python
-import os
+import logging
+import signal
+
+logging.basicConfig(format='%(levelname)s: %(asctime)s - %(message)s', datefmt='%d.%m.%Y %I:%M:%S')
 
 import django
-from tornado.iostream import StreamClosedError
-from tornado.tcpserver import TCPServer
+import sys
+from pydicom.uid import *
+from pynetdicom3 import *
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'neurdicom.settings'
 django.setup()
@@ -16,6 +20,7 @@ import tornado.web
 import tornado.wsgi
 
 define('rest_port', type=int, default=8080)
+define('dicom_port', type=int, default=11112)
 
 PATIENT_LIST_URL = r'/api/patients'
 PATIENT_DETAIL_URL = r'/api/patients/(\d+)'
@@ -30,6 +35,7 @@ SERIES_DETAIL_URL = r'/api/series/(\d+)'
 SERIES_INSTANCES_URL = r'/api/series/(\d+)/instances'
 
 INSTANCE_LIST_URL = r'/api/instances'
+INSTANCE_UPLOAD_URL = r'/api/instances/upload'
 INSTANCE_DETAIL_URL = r'/api/instances/(\d+)'
 INSTANCE_IMAGE_URL = r'/api/instances/(\d+)/image'
 INSTANCE_RAW_URL = r'/api/instances/(\d+)/raw'
@@ -42,27 +48,13 @@ DICOM_NODE_ECHO_URL = r'/api/dicom_nodes/(\d+)/echo'
 
 PLUGIN_LIST_URL = r'/api/plugins'
 PLUGIN_DETAIL_URL = r'/api/plugins/(\d+)'
+PLUGIN_INSTALL_URL = r'/api/plugins/(\d+)/install'
 
 MEDIA_URL = r'/media/(.*)'
 
 
-class EchoServer(TCPServer):
-    @gen.coroutine
-    def handle_stream(self, stream, address):
-        while True:
-            try:
-                data = yield stream.read_until(b"\n")
-                print('Chunk', data, 'was received from', address)
-                yield stream.write(data)
-            except StreamClosedError:
-                break
-
-
 def main():
     parse_command_line()
-
-    # wsgi_app = get_wsgi_application()
-    # container = tornado.wsgi.WSGIContainer(wsgi_app)
 
     rest_app = tornado.web.Application(
         [
@@ -88,6 +80,7 @@ def main():
             (INSTANCE_RAW_URL, InstanceRawHandler),
             (INSTANCE_DETAIL_URL, InstanceDetailHandler),
             (INSTANCE_LIST_URL, InstanceListHandler),
+            (INSTANCE_UPLOAD_URL, InstanceUploadHandler),
 
             # Dicom Nodes
             (DICOM_NODE_DETAIL_URL, DicomNodeDetailHandler),
@@ -97,40 +90,37 @@ def main():
             # Plugins
             (PLUGIN_DETAIL_URL, PluginDetailHandler),
             (PLUGIN_LIST_URL, PluginListHandler),
+            (PLUGIN_INSTALL_URL, InstallPluginHandler),
 
             # Media download
             (MEDIA_URL, tornado.web.StaticFileHandler, {'path': 'media'})
         ])
-
-    # def on_c_echo():
-    #     return 0x0000
-    #
-    # def on_c_store(ds: Dataset):
-    #     pass
-    #
-    # ae = AE(ae_title='ORTHANC', port=4242, scp_sop_class=[VerificationSOPClass], transfer_syntax=[
-    #     ImplicitVRLittleEndian,
-    #     ExplicitVRLittleEndian,
-    #     DeflatedExplicitVRLittleEndian,
-    #     ExplicitVRBigEndian]
-    #         )
-    #
-    # ae.maximum_associations = 10
-    # ae.on_c_echo = on_c_echo
-    # ae.on_c_store = on_c_store
-    #
-    # # ae.start()
-    # # print('DICOM server started')
-    # # dicom_server = EchoServer()
-    # # dicom_server.bind(options.dicom_port)
-    # # dicom_server.start()
-    #
-    rest_server = tornado.httpserver.HTTPServer(rest_app)
-    rest_server.bind(options.rest_port)
-    rest_server.start(0)
-    print('HTTP server started')
-    #
-    tornado.ioloop.IOLoop.current().start()
+    new_pid = os.fork()
+    if new_pid == 0:
+        try:
+            logging.info('DICOM server starting at port = %d' % options.dicom_port)
+            dicom_server = DICOMServer(port=options.dicom_port,
+                                       scp_sop_class=StorageSOPClassList + [VerificationSOPClass],
+                                       transfer_syntax=UncompressedPixelTransferSyntaxes)
+            dicom_server.start()
+        except (KeyboardInterrupt, SystemExit):
+            logging.info('DICOM server finishing...')
+            logging.info('Child process exiting...')
+            sys.exit(0)
+    elif new_pid > 0:
+        try:
+            rest_server = tornado.httpserver.HTTPServer(rest_app)
+            rest_server.bind(options.rest_port)
+            rest_server.start()
+            logging.info('Rest server starting at port = %d' % options.rest_port)
+            tornado.ioloop.IOLoop.current().start()
+        except (KeyboardInterrupt, SystemExit):
+            logging.info('Rest server finishing...')
+            os.kill(new_pid, signal.SIGINT)
+            logging.info('Parent process exiting...')
+            sys.exit(0)
+    else:
+        logging.error('Can not fork any processes')
 
 
 if __name__ == '__main__':

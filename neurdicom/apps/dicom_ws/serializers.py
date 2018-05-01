@@ -85,6 +85,7 @@ class InstanceDetailSerializer(ModelSerializer):
                 'study_date': str(study.study_date)
             },
             'series': {
+                'id': series.id,
                 'modality': series.modality
             }
         }
