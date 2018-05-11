@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import {Translate} from 'react-localize-redux';
 import {Button, Divider, Header, Loader, Segment} from "semantic-ui-react";
 import PropTypes from 'prop-types';
 
@@ -27,31 +28,38 @@ class PluginItem extends Component {
     render() {
         const plugin = this.props.plugin;
         return (
-            <Segment>
-                <Header as='h1'>{plugin['display_name']}
-                </Header>
-                <b>Author: </b>{plugin['author']}
-                <br/>
-                <b>Version: </b>{plugin['version']}
-                <br/>
-                <b>Tags: </b>{plugin['tags'].join(', ')}
-                <br/>
-                <b>Modalities: </b>{plugin['modalities'].join(', ')}
-                <Divider/>
-                <div style={{textAlign: 'right'}}>
-                    {
-                        plugin['is_installed'] ? (
-                            <Button color={'red'} onClick={this.onDeletePlugin}>
-                                Delete
-                            </Button>
-                        ) : (
-                            <Button color={'green'} onClick={this.onInstallPlugin}>
-                                Install
-                            </Button>
-                        )
-                    }
-                </div>
-            </Segment>
+            <Translate>
+                {
+                    (translate) => (
+                        <Segment>
+                            <Header as='h1'>{plugin['display_name']}
+                            </Header>
+                            <b>{translate('plugin.author')}: </b>{plugin['author']}
+                            <br/>
+                            <b>{translate('plugin.version')}: </b>{plugin['version']}
+                            <br/>
+                            <b>{translate('plugin.tags')}: </b>{plugin['tags'].join(', ')}
+                            <br/>
+                            <b>{translate('plugin.modalities')}: </b>{plugin['modalities'].join(', ')}
+                            <Divider/>
+                            <div style={{textAlign: 'right'}}>
+                                {
+                                    plugin['is_installed'] ? (
+                                        <Button color={'red'} onClick={this.onDeletePlugin}>
+                                            {translate('delete')}
+                                        </Button>
+                                    ) : (
+                                        <Button color={'green'} onClick={this.onInstallPlugin}>
+                                            {translate('install')}
+                                        </Button>
+                                    )
+                                }
+                            </div>
+                        </Segment>
+                    )
+                }
+            </Translate>
+
         );
     }
 }

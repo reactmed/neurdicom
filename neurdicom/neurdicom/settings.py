@@ -35,11 +35,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'debug_toolbar',
     'rest_framework',
     'apps.core',
-    'apps.dicom_ws',
-    'apps.dicom_processing'
+    'apps.dicom_ws'
 ]
 
 MIDDLEWARE = [
@@ -50,7 +48,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'neurdicom.urls'
@@ -73,8 +70,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'neurdicom.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -83,8 +78,6 @@ DATABASES = {
     }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -126,13 +119,7 @@ INTERNAL_IPS = [
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
-        # 'djangorestframework_camel_case.render.CamelCaseJSONRenderer'
-        # 'rest_framework.renderers.BrowsableAPIRenderer',
     ),
-    # 'DEFAULT_PARSER_CLASSES': (
-    #     'djangorestframework_camel_case.parser.CamelCaseJSONParser',
-    #     # Any other parsers
-    # ),
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
     )

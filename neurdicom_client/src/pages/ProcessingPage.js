@@ -4,7 +4,6 @@ import PluginsService from "../services/PluginsService";
 import ControlPanel from "../components/processingPage/ControlPanel";
 import DicomViewer from "../components/processingPage/DicomViewer";
 import ParamsDialog from "../components/processingPage/ParamsDialog";
-import BlendParamsDialog from '../components/processingPage/BlendParamsDialog';
 import * as axios from 'axios';
 import {Dimmer, Loader} from "semantic-ui-react";
 
@@ -23,8 +22,10 @@ class ProcessingPage extends Component {
             dialogOpen: false,
             isApplied: false,
             mode: 'blend',
-            alpha: 0.5,
-            isPending: false
+            alpha: 100,
+            isPending: false,
+            seedPoint: [-1, -1],
+            params: null
         };
         this.setState = this.setState.bind(this);
     }
@@ -60,7 +61,7 @@ class ProcessingPage extends Component {
     };
 
     onSetAlpha = (e) => {
-        let alpha = e.target.value;
+        let alpha = Number(e.target.value);
         this.setState({
             alpha: alpha
         })
@@ -79,9 +80,72 @@ class ProcessingPage extends Component {
         this.setState({dialogOpen: false});
     };
 
+    onSetSeedPoint = (uv) => {
+        const params = this.state.params;
+        const seedPoint = uv;
+        if(params){
+            const instance = this.state.instance;
+            const instanceId = instance['id'];
+            const pluginId = this.state.plugin['id'];
+            const w = parseInt(instance['columns']);
+            const h = parseInt(instance['rows']);
+            params['seed_point'] = [
+                Math.floor(seedPoint[0] * w),
+                Math.floor((1.0 - seedPoint[1]) * h)
+            ];
+            console.log(params);
+            axios.post(
+                `/api/instances/${instanceId}/process/by_plugin/${pluginId}`,
+                JSON.stringify(params),
+                {
+                    responseType: 'blob',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/octet-stream'
+                    }
+                }
+            ).then((resp) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const mask = new Uint8Array(e.target.result);
+                    let count = mask.filter(v => v > 0).length;
+                    console.log(count);
+                    let pixelSize = parseFloat(instance['pixel_spacing'].split(', ')[0].replace('[', '').replace("'", ''));
+                    let area = Math.sqrt(count) * pixelSize;
+                    console.log(area);
+                    // alert(`Опухоль имеет площадь ${area} mm^2`);
+                    this.setState({
+                        mask: mask,
+                        isPending: false
+                    });
+                };
+                reader.readAsArrayBuffer(resp.data);
+            }).catch(() => {
+                alert('Error in processing!');
+                this.setState({
+                    isPending: false
+                });
+            });
+            console.log('IS PENDING');
+            this.setState({
+                isPending: true
+            });
+        }
+        this.setState({
+            seedPoint: uv
+        });
+    };
+
     onApply = (params) => {
-        const instanceId = this.state.instance['id'];
+        const instance = this.state.instance;
+        const instanceId = instance['id'];
         const pluginId = this.state.plugin['id'];
+        const w = parseInt(instance['columns']);
+        const h = parseInt(instance['rows']);
+        params['seed_point'] = [
+            Math.floor(this.state.seedPoint[0] * w),
+            Math.floor((1.0 - this.state.seedPoint[1]) * h)
+        ];
         console.log(params);
         axios.post(
             `/api/instances/${instanceId}/process/by_plugin/${pluginId}`,
@@ -97,13 +161,19 @@ class ProcessingPage extends Component {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const mask = new Uint8Array(e.target.result);
+                let count = mask.filter(v => v > 0).length;
+                console.log(count);
+                let pixelSize = parseFloat(instance['pixel_spacing'].split(', ')[0].replace('[', '').replace("'", ''));
+                let area = Math.sqrt(count) * pixelSize;
+                console.log(area);
+                // alert(`Опухоль имеет площадь ${area} mm^2`);
                 this.setState({
                     mask: mask,
                     isPending: false
                 });
             };
             reader.readAsArrayBuffer(resp.data);
-        }).catch((resp) => {
+        }).catch(() => {
             alert('Error in processing!');
             this.setState({
                 isPending: false
@@ -111,7 +181,8 @@ class ProcessingPage extends Component {
         });
         console.log('IS PENDING');
         this.setState({
-            isPending: true
+            isPending: true,
+            params: params
         })
     };
 
@@ -121,12 +192,14 @@ class ProcessingPage extends Component {
         const original = this.state.original;
         const mode = this.state.mode;
         const mask = this.state.mask;
+        const seedPoint = this.state.seedPoint;
         let alpha = this.state.alpha;
         const isPending = this.state.isPending;
         if (alpha === undefined || alpha === null || alpha === '')
             alpha = 0.5;
         alpha = parseFloat(alpha);
         const colorScale = this.state.colorScale;
+        console.log(seedPoint);
         if (instance && plugin) {
             const viewerProps = {
                 style: {
@@ -137,7 +210,9 @@ class ProcessingPage extends Component {
                 original: original,
                 mode: mode,
                 mask: mask,
-                alpha: alpha
+                alpha: alpha / 100.0,
+                seedPoint: seedPoint,
+                onMouseClick: this.onSetSeedPoint
             };
             if (isPending) {
                 return (
@@ -151,7 +226,7 @@ class ProcessingPage extends Component {
                                       onSetAlpha={this.onSetAlpha} alpha={this.state.alpha}/>
                         <Dimmer active>
                             <Loader active>
-                                Processing takes some time...
+                                Обработка займет несколько минут...
                             </Loader>
                         </Dimmer>
                         <DicomViewer {...viewerProps}/>

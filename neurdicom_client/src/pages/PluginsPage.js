@@ -1,5 +1,6 @@
 import MenuContainer from "../components/common/MenuContainer";
 import React, {Component} from "react";
+import {Translate} from 'react-localize-redux';
 import PluginsService from "../services/PluginsService";
 import {Button, Divider, Dropdown, Form, Header, Message, Segment, Select} from "semantic-ui-react";
 import 'semantic-ui-css/semantic.min.css';
@@ -45,7 +46,7 @@ class PluginsPage extends Component {
                 this.setState({plugins: plugins});
             });
         }).catch((err) => {
-            alert(`Plugin "${plugin['display_name']}" could not uninstalled!`);
+            alert(`Плагин "${plugin['display_name']}" не может быть удален!`);
         })
     };
 
@@ -57,7 +58,7 @@ class PluginsPage extends Component {
                 this.setState({plugins: plugins});
             });
         }).catch((err) => {
-            alert(`Plugin "${plugin['display_name']}" could not installed!`);
+            alert(`Плагин "${plugin['display_name']}" не может быть установлен!`);
             this.setState({});
         })
     };
@@ -67,43 +68,50 @@ class PluginsPage extends Component {
         if (this.state.plugins && this.state.plugins.length > 0) {
             return (
                 <MenuContainer activeItem='plugins'>
-                    <div style={{margin: '30px'}}>
-                        <Form style={{marginBottom: '40px'}}>
-                            <Form.Group widths='equal'>
-                                <Form.Input
-                                    label='Plugin Name'
-                                    action={<Dropdown button basic floating options={patientMatcherOptions}
-                                                      defaultValue='EXACT'/>}
-                                    icon='search'
-                                    iconPosition='left'
-                                    placeholder='Plugin Name'
-                                />
-                                <Form.Input
-                                    label='Author Name'
-                                    action={<Dropdown button basic floating options={patientMatcherOptions}
-                                                      defaultValue='EXACT'/>}
-                                    icon='search'
-                                    iconPosition='left'
-                                    placeholder='Plugin Author'
-                                />
-                            </Form.Group>
-                        </Form>
+                    <Translate>
                         {
-                            this.state.plugins.map(plugin => {
-                                return (
-                                    <PluginItem plugin={plugin} onDeletePlugin={this.onDeletePlugin}
-                                                onInstallPlugin={this.onInstallPlugin}/>
-                                )
-                            })
+                            (translate) => (
+                                <div style={{margin: '30px'}}>
+                                    <Form style={{marginBottom: '40px'}}>
+                                        <Form.Group widths='equal'>
+                                            <Form.Input
+                                                label={translate('plugin.name')}
+                                                action={<Dropdown button basic floating options={patientMatcherOptions}
+                                                                  defaultValue='EXACT'/>}
+                                                icon='search'
+                                                iconPosition='left'
+                                                placeholder={translate('plugin.name')}
+                                            />
+                                            <Form.Input
+                                                label={translate('plugin.author')}
+                                                action={<Dropdown button basic floating options={patientMatcherOptions}
+                                                                  defaultValue='EXACT'/>}
+                                                icon='search'
+                                                iconPosition='left'
+                                                placeholder={translate('plugin.author')}
+                                            />
+                                        </Form.Group>
+                                    </Form>
+                                    {
+                                        this.state.plugins.map(plugin => {
+                                            return (
+                                                <PluginItem plugin={plugin} onDeletePlugin={this.onDeletePlugin}
+                                                            onInstallPlugin={this.onInstallPlugin}/>
+                                            )
+                                        })
+                                    }
+                                </div>
+                            )
                         }
-                    </div>
+                    </Translate>
                 </MenuContainer>
             )
         }
         else {
             return (
                 <MenuContainer activeItem='plugins'>
-                    <Message warning header='Not plugins!' content='Not plugins found. You can add new plugin.'/>
+                    <Message warning header='Нет доступных плагинов!'
+                             content='Нет доступных плагинов, но вы может их установить.'/>
                 </MenuContainer>
             )
         }

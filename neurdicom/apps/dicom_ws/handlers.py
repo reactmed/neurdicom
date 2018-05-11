@@ -1,12 +1,9 @@
-from io import BytesIO, StringIO
-
 import pynetdicom3 as netdicom
 from pydicom.uid import *
 from pydicom import read_file, FileDataset
 from tornado import gen
 from apps.core.handlers import *
-from apps.core.utils import DicomProcessor, convert_array_to_img, DicomSaver, convert_to_8bit
-from apps.dicom_processing.views import PluginSerializer
+from apps.core.utils import *
 from apps.dicom_ws.serializers import *
 import pip
 
@@ -265,6 +262,9 @@ class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
         instance = Instance.objects.get(pk=instance_id)
         plugin = Plugin.objects.get(pk=by_plugin_id)
         params = self.request.arguments
+        with ImageProcessor(plugin) as processor:
+            result = processor.process(instance, **params)
+
         # for k in plugin.params:
         #     if plugin.params[k].get('is_array', False):
         #         v = self.get_query_arguments(k, None)
@@ -276,7 +276,6 @@ class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
         #         else:
         #             params[k] = self._convert(v, plugin.params[k]['type'])
 
-        result = DicomProcessor.process(instance, plugin, **params)
         if plugin.result['type'] == 'IMAGE':
             if isinstance(result, BytesIO):
                 result = result.getvalue()
@@ -488,16 +487,44 @@ class InstallPluginHandler(CreateHandlerMixin):
 
 
 class DICOMServer(netdicom.AE):
+    logger = logging.getLogger('DICOMServer')
 
     def __init__(self, *args, **kwargs):
         super(DICOMServer, self).__init__(*args, **kwargs)
 
     def on_c_echo(self):
-        logging.info('C-Echo succeeded')
+        logger.info('C-Echo succeeded')
         return 0x0000
 
+    def on_c_find(self, ds: Dataset):
+        logger.info('C-Find processing request')
+        logger.info(ds)
+        qr_level = ds.QueryRetrieveLevel
+        res_ds = Dataset()
+        res_ds.QueryRetrieveLevel = ds.QueryRetrieveLevel
+        res_ds.RetrieveAETitle = 'NEURDICOM'
+        res_ds.PatientName = ds.get('PatientName', 'John Doe')
+        status_ds = Dataset()
+        status_ds.Status = 0x0000
+        yield status_ds, res_ds
+
+    def on_c_move(self, ds: Dataset, move_aet):
+        logger.info('C-Find processing request')
+        logger.info(ds)
+
+    def on_c_get(self, ds: Dataset):
+        logger.info('C-Get processing request')
+        logger.info(ds)
+        res_ds = Dataset()
+        res_ds.QueryRetrieveLevel = ds.QueryRetrieveLevel
+        res_ds.RetrieveAETitle = 'NEURDICOM'
+        res_ds.PatientName = ds.get('PatientName', 'John Doe')
+        status_ds = Dataset()
+        status_ds.Status = 0xFF00
+        yield status_ds, res_ds
+
     def on_c_store(self, ds: Dataset):
-        logging.info('C-Store processing')
+        logger.info('C-Store processing')
         file_meta = Dataset()
         file_meta.TransferSyntaxUID = ImplicitVRLittleEndian
         file_meta.MediaStorageSOPClassUID = ds.SOPClassUID
@@ -508,5 +535,5 @@ class DICOMServer(netdicom.AE):
         fds.is_little_endian = True
         fds.is_implicit_VR = True
         DicomSaver.save(fds)
-        logging.info('C-Store succeeded')
+        logger.info('C-Store succeeded')
         return 0x0000

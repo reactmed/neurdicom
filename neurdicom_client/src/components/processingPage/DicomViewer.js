@@ -6,6 +6,11 @@ import './DicomViewer.css';
 class DicomViewer extends Component {
     constructor(props) {
         super(props);
+        this.rayCaster = new THREE.Raycaster();
+        this.onMouseClick = this.props.onMouseClick || function (uv) {
+
+        };
+        this.setState = this.setState.bind(this);
     }
 
     onWindowResize = () => {
@@ -13,6 +18,32 @@ class DicomViewer extends Component {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(this.node.clientWidth, this.node.clientHeight);
     };
+
+    onMouseClickCallback = (e) => {
+        const scene = this.scene;
+        const camera = this.camera;
+        const rayCaster = this.rayCaster;
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+        const array = DicomViewer.getMousePosition(e.target, clientX, clientY);
+        const vecPos = new THREE.Vector2(array[0] * 2 - 1, -(array[1] * 2) + 1);
+        rayCaster.setFromCamera(vecPos, camera);
+        const intersects = rayCaster.intersectObjects(scene.children);
+        if (intersects && intersects.length > 0) {
+            const intersectedImg = intersects[0];
+            const uv = intersectedImg.uv;
+            if (uv) {
+                this.onMouseClick([uv.x, uv.y]);
+            }
+        }
+    };
+
+    static getMousePosition(dom, x, y) {
+        const boundingBox = dom.getBoundingClientRect();
+        return [
+            (x - boundingBox.left) / boundingBox.width, (y - boundingBox.top) / boundingBox.height
+        ];
+    }
 
     static fillCanvasFromData(data, w, h) {
         const canvas = document.createElement('canvas');
@@ -42,8 +73,10 @@ class DicomViewer extends Component {
         const mode = this.props.mode;
         const alpha = this.props.alpha;
         const colorScale = this.props.colorScale;
-        const w = instance['columns'];
-        const h = instance['rows'];
+        const w = parseFloat(instance['columns']);
+        const h = parseFloat(instance['rows']);
+        const seedPoint = this.props.seedPoint || [-1.0, -1.0];
+        console.log(seedPoint);
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, this.node.clientWidth / this.node.clientHeight, 0.1, 100);
         this.renderer = new THREE.WebGLRenderer();
@@ -52,6 +85,7 @@ class DicomViewer extends Component {
         this.node.appendChild(this.renderer.domElement);
 
         this.node.addEventListener('resize', this.onWindowResize, false);
+        this.node.onclick = this.onMouseClickCallback;
 
         let vertShader = null;
         let fragShader = null;
@@ -68,6 +102,12 @@ class DicomViewer extends Component {
                 },
                 alpha: {
                     value: alpha
+                },
+                seedPoint: {
+                    value: new THREE.Vector2(seedPoint[0], seedPoint[1])
+                },
+                imgSize: {
+                    value: new THREE.Vector2(w, h)
                 }
             };
         }
@@ -78,6 +118,12 @@ class DicomViewer extends Component {
             uniforms = {
                 texture: {
                     type: 't', value: DicomViewer.textureFromCanvas(original, w, h)
+                },
+                seedPoint: {
+                    value: new THREE.Vector2(seedPoint[0], seedPoint[1])
+                },
+                imgSize: {
+                    value: new THREE.Vector2(w, h)
                 }
             };
         }
@@ -101,8 +147,10 @@ class DicomViewer extends Component {
         const mode = this.props.mode;
         const alpha = this.props.alpha;
         const colorScale = this.props.colorScale;
-        const w = instance['columns'];
-        const h = instance['rows'];
+        const seedPoint = this.props.seedPoint;
+        console.log(seedPoint);
+        const w = parseFloat(instance['columns']);
+        const h = parseFloat(instance['rows']);
 
         if (mask) {
             const vertShader = document.getElementById('mainVert').textContent;
@@ -116,6 +164,12 @@ class DicomViewer extends Component {
                 },
                 alpha: {
                     value: alpha
+                },
+                seedPoint: {
+                    value: new THREE.Vector2(seedPoint[0], seedPoint[1])
+                },
+                imgSize: {
+                    value: new THREE.Vector2(w, h)
                 }
             };
             const material = new THREE.ShaderMaterial({
@@ -133,6 +187,12 @@ class DicomViewer extends Component {
             const uniforms = {
                 texture: {
                     type: 't', value: new THREE.CanvasTexture(DicomViewer.fillCanvasFromData(original, w, h))
+                },
+                seedPoint: {
+                    value: new THREE.Vector2(seedPoint[0], seedPoint[1])
+                },
+                imgSize: {
+                    value: new THREE.Vector2(w, h)
                 }
             };
             const material = new THREE.ShaderMaterial({
@@ -185,7 +245,9 @@ DicomViewer.propTypes = {
     original: PropTypes.object,
     mask: PropTypes.object,
     mode: PropTypes.string,
-    colorScale: PropTypes.string
+    colorScale: PropTypes.string,
+    seedPoint: PropTypes.array,
+    onMouseClick: PropTypes.func
 };
 
 export default DicomViewer;

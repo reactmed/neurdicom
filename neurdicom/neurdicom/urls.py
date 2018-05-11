@@ -22,14 +22,5 @@ from neurdicom import settings
 urlpatterns = [
                   path('admin/', admin.site.urls),
                   path('api-auth/', include('rest_framework.urls')),
-                  path('api/', include('apps.dicom_processing.urls')),
                   path('api/', include('apps.dicom_ws.urls'))
-                  # path('', IndexView.as_view())
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# if settings.DEBUG:
-#     import debug_toolbar
-#
-#     urlpatterns = [
-#                       url(r'^dev/debug', include(debug_toolbar.urls)),
-#                   ] + urlpatterns

@@ -237,7 +237,7 @@ class Plugin(models.Model):
     class Meta:
         db_table = 'plugins'
 
-    name = models.CharField(verbose_name=_('Name'), max_length=100)
+    name = models.CharField(verbose_name=_('Name'), max_length=100, unique=True, null=False)
     display_name = models.CharField(verbose_name=_('Display Name'), default='', max_length=150)
     version = models.CharField(verbose_name=_('Version'), max_length=20)
     author = models.CharField(verbose_name=_('Author'), max_length=100, blank=True, null=True)

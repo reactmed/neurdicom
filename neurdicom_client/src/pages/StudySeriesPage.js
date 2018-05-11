@@ -6,22 +6,23 @@ import {
 import StudiesService from "../services/DicomService";
 import MenuContainer from "../components/common/MenuContainer";
 import {Link} from "react-router-dom";
+import {Translate} from "react-localize-redux";
 
 const options = [
-    {key: 'DX', text: 'DX (Digital Radiography)', value: 'DX'},
-    {key: 'MR', text: 'MR (Magnetic Resonance)', value: 'MR'},
-    {key: 'CT', text: 'CT (Computer Tomography)', value: 'CT'},
-    {key: 'US', text: 'US (Ultrasound)', value: 'US'},
-    {key: 'ECG', text: 'ECG (Electrocardiography)', value: 'ECG'},
-    {key: 'XA', text: 'XA (X-Ray)', value: 'XA'},
-    {key: 'OT', text: 'OT (Other)', value: 'OT'},
+    {key: 'DX', text: 'DX', value: 'DX'},
+    {key: 'MR', text: 'MR', value: 'MR'},
+    {key: 'CT', text: 'CT', value: 'CT'},
+    {key: 'US', text: 'US', value: 'US'},
+    {key: 'ECG', text: 'ECG', value: 'ECG'},
+    {key: 'XA', text: 'XA', value: 'XA'},
+    {key: 'OT', text: 'OT', value: 'OT'},
 ];
 
 const patientMatcherOptions = [
-    {key: 'EXACT', text: 'Exact equals', value: 'EXACT'},
-    {key: 'STARTS_WITH', text: 'Starts with', value: 'STARTS_WITH'},
-    {key: 'ENDS_WITH', text: 'Ends with', value: 'ENDS_WITH'},
-    {key: 'FUZZY', text: 'Fuzzy matching', value: 'FUZZY'},
+    {key: 'EXACT', text: 'Точный поиск', value: 'EXACT'},
+    {key: 'STARTS_WITH', text: 'Начинается с', value: 'STARTS_WITH'},
+    {key: 'ENDS_WITH', text: 'Заканчивается', value: 'ENDS_WITH'},
+    {key: 'FUZZY', text: 'Нечеткий поиск', value: 'FUZZY'},
 ];
 
 export default class StudySeriesPage extends Component {
@@ -46,76 +47,84 @@ export default class StudySeriesPage extends Component {
         if (series && series.length > 0) {
             return (
                 <MenuContainer activeItem=''>
-                    <Grid columns='equal'>
-                        <Grid.Row>
-                            <Grid.Column width={5}>
-                                <Header as='h3' inverted color='blue' attached>Patient</Header>
-                                <Segment inverted attached>
-                                    <h4>{study['patient']['patient_name'] || 'Anonymized'}</h4>
-                                    Patient ID: <b>{study['patient']['patient_id']}</b>
-                                    <br/>
-                                    Patient Sex: <b>{study['patient']['patient_sex']}</b>
-                                    <br/>
-                                    Patient Age: <b>{study['patient']['patient_age']}</b>
-                                </Segment>
-                                <Header as='h3' inverted color='blue' attached>Study</Header>
-                                <Segment inverted attached>
-                                    <h4>{study['study_description']}</h4>
-                                    Study Date: <b>{study['study_date'] || '––'}</b>
-                                    <br/>
-                                    Referring Physician Name: <b>{study['study_date'] || '––'}</b>
-                                </Segment>
-                            </Grid.Column>
-                            <Grid.Column>
-                                <Form>
-                                    <Form.Group widths='equal'>
-                                        <Form.Input
-                                            label='Series Instance UID'
-                                            action={<Dropdown button basic floating options={patientMatcherOptions}
-                                                              defaultValue='EXACT'/>}
-                                            icon='search'
-                                            iconPosition='left'
-                                            placeholder='Series Instance UID'
-                                        />
-                                        <Form.Field control={Select} label='Modality' options={options}
-                                                    placeholder='Modality'/>
-                                    </Form.Group>
-                                </Form>
-                                {
-                                    series.map((seriesItem, index) => {
-                                        return (
-                                            <div>
-                                                <Header as='h4' inverted color='white'
-                                                        attached textAlign={'left'}>
-                                                    {seriesItem['protocol_name'] || `Series ${index + 1}`}
-                                                </Header>
-                                                <Segment attached>
-                                                    <b>Series
-                                                        Description: </b> {seriesItem['series_description'] || '––'}
-                                                    <br/>
-                                                    <b>Modality: </b>{seriesItem['modality']}
-                                                    <br/>
-                                                    <b>Body Part
-                                                        Examined: </b>{seriesItem['body_part_examined'] || '––'}
-                                                    <br/>
-                                                    <b>Patient Position: </b>{seriesItem['patient_position']}
-                                                    <br/>
-                                                    <b>Series Number: </b>{seriesItem['series_number']}
-                                                    <br/>
-                                                    <b>Images Count: </b>{seriesItem['images_count']}
-                                                </Segment>
-                                                <div className={'ui attached right aligned header'}>
-                                                    <Button floated positive as={Link}
-                                                            to={`/series/${seriesItem['id']}`}>Open</Button>
-                                                </div>
+                    <Translate>
+                        {
+                            (translate) => (
+                                <Grid columns='equal'>
+                                    <Grid.Row>
+                                        <Grid.Column width={5}>
+                                            <Header as='h3' inverted color='blue'
+                                                    attached>{translate('patient.patient')}</Header>
+                                            <Segment inverted attached>
+                                                <h4>{study['patient']['patient_name'] || translate('patient.anonymized')}</h4>
+                                                {translate('patient.id')}: <b>{study['patient']['patient_id']}</b>
                                                 <br/>
-                                            </div>
-                                        );
-                                    })
-                                }
-                            </Grid.Column>
-                        </Grid.Row>
-                    </Grid>
+                                                {translate('patient.gender')}: <b>{study['patient']['patient_sex']}</b>
+                                                <br/>
+                                                {translate('patient.age')}: <b>{study['patient']['patient_age']}</b>
+                                            </Segment>
+                                            <Header as='h3' inverted color='blue'
+                                                    attached>{translate('study.study')}</Header>
+                                            <Segment inverted attached>
+                                                <h4>{study['study_description']}</h4>
+                                                {translate('study.date')}: <b>{study['study_date'] || '––'}</b>
+                                                <br/>
+                                                {translate('study.referringPhysician')}: <b>{study['referring_physician'] || '––'}</b>
+                                            </Segment>
+                                        </Grid.Column>
+                                        <Grid.Column>
+                                            <Form>
+                                                <Form.Group widths='equal'>
+                                                    <Form.Input
+                                                        label={translate('study.id')}
+                                                        action={<Dropdown button basic floating
+                                                                          options={patientMatcherOptions}
+                                                                          defaultValue='EXACT'/>}
+                                                        icon='search'
+                                                        iconPosition='left'
+                                                        placeholder={translate('study.id')}
+                                                    />
+                                                    <Form.Field control={Select} label={translate('study.modality')}
+                                                                options={options}
+                                                                placeholder={translate('study.modality')}/>
+                                                </Form.Group>
+                                            </Form>
+                                            {
+                                                series.map((seriesItem, index) => {
+                                                    return (
+                                                        <div>
+                                                            <Header as='h4' inverted color='white'
+                                                                    attached textAlign={'left'}>
+                                                                {seriesItem['protocol_name'] || `${translate('series.series')} ${index + 1}`}
+                                                            </Header>
+                                                            <Segment attached>
+                                                                <b>{translate('series.description')}: </b> {seriesItem['series_description'] || '––'}
+                                                                <br/>
+                                                                <b>{translate('series.modality')}: </b>{seriesItem['modality']}
+                                                                <br/>
+                                                                <b>{translate('series.bodyPartExamined')}: </b>{seriesItem['body_part_examined'] || '––'}
+                                                                <br/>
+                                                                <b>{translate('series.patientPosition')}: </b>{seriesItem['patient_position']}
+                                                                <br/>
+                                                                <b>{translate('series.seriesNumber')}: </b>{seriesItem['series_number']}
+                                                                <br/>
+                                                                <b>{translate('imagesCount')}: </b>{seriesItem['images_count']}
+                                                            </Segment>
+                                                            <div className={'ui attached right aligned header'}>
+                                                                <Button floated positive as={Link}
+                                                                        to={`/series/${seriesItem['id']}`}>{translate('open')}</Button>
+                                                            </div>
+                                                            <br/>
+                                                        </div>
+                                                    );
+                                                })
+                                            }
+                                        </Grid.Column>
+                                    </Grid.Row>
+                                </Grid>
+                            )
+                        }
+                    </Translate>
                 </MenuContainer>
             );
         }

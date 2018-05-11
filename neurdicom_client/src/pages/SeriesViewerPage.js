@@ -117,9 +117,11 @@ class SeriesViewerPage extends Component {
     }
 
     onApplyPlugin = (pluginId) => {
-        const instance = this.state.instances[this.state.index];
-        console.log(instance);
-        this.props.history.push(`/instances/${instance['id']}/process/${pluginId}`);
+        if (pluginId) {
+            const instance = this.state.instances[this.state.index];
+            console.log(instance);
+            this.props.history.push(`/instances/${instance['id']}/process/${pluginId}`);
+        }
     };
 
 

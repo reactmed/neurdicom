@@ -1,6 +1,4 @@
 import React, {Component} from 'react';
-import {Translate} from 'react-localize-redux';
-import {connect} from 'react-redux';
 import {
     Button, Checkbox, Container, Dropdown, Form, Icon, Input, Menu, Radio, Segment, Select, Sidebar, Table,
     TextArea, TransitionablePortal as visible
@@ -8,6 +6,7 @@ import {
 import StudiesService from "../services/DicomService";
 import {Link} from "react-router-dom";
 import MenuContainer from "../components/common/MenuContainer";
+import {Translate} from "react-localize-redux";
 
 const patientMatcherOptions = [
     {key: 'EXACT', text: 'Точный поиск', value: 'EXACT'},
@@ -25,7 +24,7 @@ const options = [
     {key: 'OT', text: 'OT', value: 'OT'},
 ];
 
-class StudiesPage extends Component {
+class PatientStudiesPage extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -35,14 +34,12 @@ class StudiesPage extends Component {
     }
 
     componentWillMount() {
-        StudiesService.findStudies(studyList => {
-            console.log(studyList);
+        StudiesService.findStudiesByPatient(studyList => {
             this.setState({studies: studyList})
-        });
+        }, this.props.match.params.id);
     }
 
     render() {
-        const {activeItem} = this.state;
         return (
             <MenuContainer activeItem='studies'>
                 <Translate>
@@ -60,12 +57,12 @@ class StudiesPage extends Component {
                                             placeholder={translate('patient.name')}
                                         />
                                         <Form.Input
-                                            label={translate('study.id')}
+                                            label={translate('patient.id')}
                                             action={<Dropdown button basic floating options={patientMatcherOptions}
                                                               defaultValue='EXACT'/>}
                                             icon='search'
                                             iconPosition='left'
-                                            placeholder={translate('study.id')}
+                                            placeholder={translate('patient.id')}
                                         />
                                         <Form.Field control={Select} label={translate('study.modality')}
                                                     options={options}
@@ -89,7 +86,7 @@ class StudiesPage extends Component {
                                                 return (
                                                     <Table.Row>
                                                         <Table.Cell>
-                                                            {study['patient']['patient_name']}
+                                                            {study['patient']['patient_name'] || translate('patient.anonymized')}
                                                         </Table.Cell>
                                                         <Table.Cell>
                                                             <Link to={`/studies/${study['id']}`}>
@@ -123,8 +120,4 @@ class StudiesPage extends Component {
     }
 }
 
-const mapStateToProps = (state) => ({});
-
-const mapDispatchToProps = (dispatch) => ({});
-
-export default connect(mapStateToProps, mapDispatchToProps)(StudiesPage);
+export default PatientStudiesPage;

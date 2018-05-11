@@ -19,8 +19,9 @@ import tornado.ioloop
 import tornado.web
 import tornado.wsgi
 
+define('aet', type=str, default='NEURDICOM')
 define('rest_port', type=int, default=8080)
-define('dicom_port', type=int, default=11112)
+define('dicom_port', type=int, default=4242)
 
 PATIENT_LIST_URL = r'/api/patients'
 PATIENT_DETAIL_URL = r'/api/patients/(\d+)'
@@ -99,7 +100,7 @@ def main():
     if new_pid == 0:
         try:
             logging.info('DICOM server starting at port = %d' % options.dicom_port)
-            dicom_server = DICOMServer(port=options.dicom_port,
+            dicom_server = DICOMServer(ae_title=options.aet, port=options.dicom_port,
                                        scp_sop_class=StorageSOPClassList + [VerificationSOPClass],
                                        transfer_syntax=UncompressedPixelTransferSyntaxes)
             dicom_server.start()
@@ -111,7 +112,7 @@ def main():
         try:
             rest_server = tornado.httpserver.HTTPServer(rest_app)
             rest_server.bind(options.rest_port)
-            rest_server.start()
+            rest_server.start(0)
             logging.info('Rest server starting at port = %d' % options.rest_port)
             tornado.ioloop.IOLoop.current().start()
         except (KeyboardInterrupt, SystemExit):

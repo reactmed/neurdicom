@@ -7,57 +7,57 @@ const colorScaleOptions = [
     {
         'key': 'main',
         'value': 'main',
-        'text': 'Original'
+        'text': 'Исходное изображение'
     },
     {
         'key': 'heatmap',
         'value': 'heatmap',
-        'text': 'Heatmap'
+        'text': 'Тепловая карта'
     },
     {
         'key': 'inverseHeatmap',
         'value': 'inverseHeatmap',
-        'text': 'Inverse Heatmap'
+        'text': 'Инвертированная тепловая карта'
     },
     {
         'key': 'hotRed',
         'value': 'hotRed',
-        'text': 'Hot Red'
+        'text': 'Красная схема'
     },
     {
         'key': 'hotGreen',
         'value': 'hotGreen',
-        'text': 'Hot Green'
+        'text': 'Зеленая схема'
     },
     {
         'key': 'hotBlue',
         'value': 'hotBlue',
-        'text': 'Hot Blue'
+        'text': 'Синяя схема'
     },
     {
         'key': 'inverse',
         'value': 'inverse',
-        'text': 'Inverse'
+        'text': 'Инвертирование'
     },
     {
         'key': 'sobel',
         'value': 'sobel',
-        'text': 'Sobel Operator'
+        'text': 'Оператор Собеля'
     },
     {
         'key': 'sharpen',
         'value': 'sharpen',
-        'text': 'Sharpen'
+        'text': 'Резкость'
     },
     {
         'key': 'emboss',
         'value': 'emboss',
-        'text': 'Emboss'
+        'text': 'Тиснение'
     },
     {
         'key': 'laplacian',
         'value': 'laplacian',
-        'text': 'Laplacian'
+        'text': 'Оператор Лапласа'
     }
 ];
 
@@ -65,27 +65,27 @@ const viewModeOptions = [
     {
         'key': 'main',
         'value': 'main',
-        'text': 'No Mask'
+        'text': 'Нет маски'
     },
     {
         'key': 'blend',
         'value': 'blend',
-        'text': 'Blend'
+        'text': 'Смешивание'
     },
     {
         'key': 'mix',
         'value': 'mix',
-        'text': 'Mix'
+        'text': 'Полное смешивание'
     },
     {
         'key': 'crop',
         'value': 'crop',
-        'text': 'Crop Segment'
+        'text': 'Вырезать фрагмент'
     },
     {
         'key': 'contour',
         'value': 'contour',
-        'text': 'Contour Segment'
+        'text': 'Контурное выделение'
     }
 ];
 
@@ -104,11 +104,6 @@ class ControlPanel extends Component {
         this.setState = this.setState.bind(this);
     }
 
-    onSetAlphaCallback = (e) => {
-        const value = e.target.value;
-        this.onSetAlpha(value);
-    };
-
     render() {
         return (
             <Menu inverted style={{borderRadius: '0px', marginBottom: '0px'}}>
@@ -118,21 +113,21 @@ class ControlPanel extends Component {
                     </Button>
                 </Menu.Item>
                 <Menu.Item>
-                    <Dropdown placeholder='Color scale' fluid search selection options={colorScaleOptions}
+                    <Dropdown placeholder='Фильтр' fluid search selection options={colorScaleOptions}
                               onChange={this.onSetColorScale}/>
                 </Menu.Item>
                 <Menu.Item>
-                    <Dropdown placeholder='View Mode' fluid search selection options={viewModeOptions}
+                    <Dropdown placeholder='Режим просмотра' fluid search selection options={viewModeOptions}
                               onChange={this.onSetMode}/>
                 </Menu.Item>
                 <Menu.Item>
-                    <Label inverted>Alpha</Label>
-                    <Input name={'alpha'} key={'alpha'} value={this.props.alpha}
+                    <Label inverted>Прозрачность</Label>
+                    <Input type={'range'} min={'0'} max={'100'} name={'alpha'} key={'alpha'} value={this.props.alpha}
                                             onChange={this.onSetAlpha}/>
                 </Menu.Item>
                 <Menu.Item>
                     <Button primary onClick={this.onApplyPlugin}>
-                        Apply plugin
+                        Применить плагин
                     </Button>
                 </Menu.Item>
             </Menu>

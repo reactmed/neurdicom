@@ -3,61 +3,63 @@ import {Button, Dropdown, Icon, Menu, Modal} from "semantic-ui-react";
 import PropTypes from 'prop-types';
 import PluginsService from "../../services/PluginsService";
 
-const colorScaleOptions = [
-    {
-        'key': 'main',
-        'value': 'main',
-        'text': 'Original'
-    },
-    {
-        'key': 'heatmap',
-        'value': 'heatmap',
-        'text': 'Heatmap'
-    },
-    {
-        'key': 'inverseHeatmap',
-        'value': 'inverseHeatmap',
-        'text': 'Inverse Heatmap'
-    },
-    {
-        'key': 'hotRed',
-        'value': 'hotRed',
-        'text': 'Hot Red'
-    },
-    {
-        'key': 'hotGreen',
-        'value': 'hotGreen',
-        'text': 'Hot Green'
-    },
-    {
-        'key': 'hotBlue',
-        'value': 'hotBlue',
-        'text': 'Hot Blue'
-    },
-    {
-        'key': 'inverse',
-        'value': 'inverse',
-        'text': 'Inverse'
-    },
+const filterOptions = [
     {
         'key': 'sobel',
         'value': 'sobel',
-        'text': 'Sobel Operator'
+        'text': 'Оператор Собеля'
     },
     {
         'key': 'sharpen',
         'value': 'sharpen',
-        'text': 'Sharpen'
+        'text': 'Резкость'
     },
     {
         'key': 'emboss',
         'value': 'emboss',
-        'text': 'Emboss'
+        'text': 'Тиснение'
     },
     {
         'key': 'laplacian',
         'value': 'laplacian',
-        'text': 'Laplacian'
+        'text': 'Оператор Лапласа'
+    }
+];
+const colorScaleOptions = [
+    {
+        'key': 'main',
+        'value': 'main',
+        'text': 'Исходное изображение'
+    },
+    {
+        'key': 'heatmap',
+        'value': 'heatmap',
+        'text': 'Тепловая схема'
+    },
+    {
+        'key': 'inverseHeatmap',
+        'value': 'inverseHeatmap',
+        'text': 'Инвертированная тепловая схема'
+    },
+    {
+        'key': 'hotRed',
+        'value': 'hotRed',
+        'text': 'Красная схема'
+    },
+    {
+        'key': 'hotGreen',
+        'value': 'hotGreen',
+        'text': 'Зеленая схема'
+    },
+    {
+        'key': 'hotBlue',
+        'value': 'hotBlue',
+        'text': 'Синяя схема'
+    },
+    {
+        'key': 'inverse',
+        'value': 'inverse',
+        'text': 'Инвертирование'
     }
 ];
 
@@ -65,12 +67,12 @@ const viewModeOptions = [
     {
         'key': 'one',
         'value': 'one',
-        'text': 'One image'
+        'text': 'Один снимок'
     },
     {
         'key': 'two',
         'value': 'two',
-        'text': 'Two images'
+        'text': 'Два снимка'
     }
 ];
 
@@ -104,8 +106,9 @@ class ControlPanel extends Component {
         }
     }
 
-    componentDidMount() {
+    componentDidMount = () => {
         PluginsService.findPlugins((plugins) => {
+            console.log(plugins);
             const pluginOptions = plugins.filter(plugin => plugin['is_installed'])
                 .map(plugin => {
                         return {key: plugin.id, value: plugin.id, text: plugin['display_name']};
@@ -116,18 +119,20 @@ class ControlPanel extends Component {
     }
 
     onSelectPlugin = (e, o) => {
-        this.setState({
-            pluginId: o.value
-        });
+        // this.setState({
+        //     pluginId: o.value
+        // });
     };
 
-    onApplyPluginCallback = () => {
+    onApplyPluginCallback = (e, o) => {
         const onApplyPlugin = this.onApplyPlugin;
-        const pluginId = this.state.pluginId;
-        onApplyPlugin(pluginId);
+        const pluginId = o.value;
+        if(pluginId) {
+            onApplyPlugin(pluginId);
+        }
     };
 
-    render() {
+    render = () => {
         const pluginOptions = this.state.pluginOptions;
         return (
             <Menu inverted style={{borderRadius: '0px', marginBottom: '0px'}}>
@@ -152,11 +157,14 @@ class ControlPanel extends Component {
                     </Button>
                 </Menu.Item>
                 <Menu.Item>
-                    <Dropdown placeholder='Color scale' fluid search selection options={colorScaleOptions}
+                    <Dropdown placeholder='Цветовая схема' fluid search selection options={colorScaleOptions}
                               onChange={this.onSetColorScale}/>
                 </Menu.Item>
                 <Menu.Item>
-                    <Dropdown placeholder='View Mode' fluid search selection options={viewModeOptions}
+                    <Dropdown placeholder='Фильтры' fluid search selection options={filterOptions}/>
+                </Menu.Item>
+                <Menu.Item>
+                    <Dropdown placeholder='Режим просмотра' fluid search selection options={viewModeOptions}
                               onChange={this.onSetViewMode}/>
                 </Menu.Item>
                 <Menu.Item>
@@ -170,11 +178,6 @@ class ControlPanel extends Component {
                     </Button>
                 </Menu.Item>
                 <Menu.Item>
-                    <Button icon inverted>
-                        <Icon name={'zoom out'}/>
-                    </Button>
-                </Menu.Item>
-                <Menu.Item>
                     <Button icon inverted onClick={this.onRotateLeft}>
                         <Icon name={'redo'}/>
                     </Button>
@@ -185,14 +188,9 @@ class ControlPanel extends Component {
                     </Button>
                 </Menu.Item>
                 <Menu.Item position={'right'}>
-                    <Dropdown ref={ref => this.pluginSelect} placeholder='Plugin' fluid search selection
-                              options={pluginOptions} onChange={this.onSelectPlugin}
+                    <Dropdown ref={ref => this.pluginSelect} placeholder='Плагин' fluid search selection
+                              options={pluginOptions} onChange={this.onApplyPluginCallback}
                     />
-                </Menu.Item>
-                <Menu.Item>
-                    <Button primary onClick={this.onApplyPluginCallback}>
-                        Apply plugin
-                    </Button>
                 </Menu.Item>
                 <Menu.Item position={'right'}>
                     <Button icon inverted onClick={this.onNextInstance}>

@@ -2,6 +2,8 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Button, Form, Modal} from "semantic-ui-react";
 import './Dialog.css';
+import Dropzone from "react-dropzone";
+import * as nifti from 'nifti-reader-js';
 
 class ParamsDialog extends Component {
     constructor(props) {
@@ -52,6 +54,21 @@ class ParamsDialog extends Component {
         })
     };
 
+    addGroundTruth = (files) => {
+        // console.log(files[0]);
+        // const file = files[0];
+        // const reader = new FileReader();
+        // reader.addEventListener('loadend', (res) => {
+        //    const gtFile = res.target.result;
+        //     console.log('COMPRESSED');
+        //     const data = nifti.decompress(gtFile);
+        //     const header = nifti.readHeader(data);
+        //     const img = nifti.readImage(header, data);
+        //     console.log(img);
+        // });
+        // reader.readAsArrayBuffer(file);
+    };
+
     render() {
         const plugin = this.props.plugin;
         const isOpen = this.props.open;
@@ -68,11 +85,26 @@ class ParamsDialog extends Component {
                                 const param = params[paramName];
                                 const displayName = param['display_name'];
                                 const isRequired = param['is_required'] || false;
+                                const range = param['range'];
+                                const step = param['step'];
                                 if (isRequired) {
                                     return (
                                         <Form.Field required>
                                             <label>{displayName}</label>
                                             <input name={paramName} key={paramName} value={this.state.params[paramName]}
+                                                   onChange={this.onChange}/>
+                                        </Form.Field>
+                                    );
+                                }
+                                if(range && range.length === 2){
+                                    return (
+                                        <Form.Field>
+                                            <label>{displayName}</label>
+                                            <input style={{width: '100%'}} type={'range'} name={paramName} key={paramName}
+                                                   min={range[0]}
+                                                   max={range[1]}
+                                                   step={step || 5.0}
+                                                   value={this.state.params[paramName]}
                                                    onChange={this.onChange}/>
                                         </Form.Field>
                                     );
@@ -86,7 +118,10 @@ class ParamsDialog extends Component {
                                 );
                             })
                         }
-                        <Button type={'button'} onClick={this.onApplyCallback} positive>Apply</Button>
+                        <Dropzone onDrop={this.addGroundTruth}>
+                            <p>Перетащите файлы сегментации</p>
+                        </Dropzone>
+                        <Button type={'button'} onClick={this.onApplyCallback} positive>Применить</Button>
                     </Form>
                 </Modal.Content>
             </Modal>

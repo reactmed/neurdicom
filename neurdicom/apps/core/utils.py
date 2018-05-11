@@ -1,4 +1,5 @@
 import json
+from abc import abstractmethod
 from io import BytesIO
 from json import JSONEncoder
 from zipfile import ZipFile
@@ -98,22 +99,102 @@ class DicomSaver:
             return instance
 
 
-class DicomProcessor:
+class BaseProcessor:
 
-    @staticmethod
-    def process(instance: Instance, plugin: Plugin, **params):
-        ds = read_file(instance.image)
-        plugin_processor = __import__(plugin.name).Plugin()
-        plugin_processor.initialize()
-        result = plugin_processor.process(ds, **params)
-        plugin_processor.destroy()
+    @abstractmethod
+    def process(self, img, **params):
+        pass
+
+
+# c_float_p = POINTER(c_float)
+# c_int_p = POINTER(c_int)
+#
+#
+# class NativeImageProcessor(BaseProcessor):
+#     def __init__(self, plugin: Plugin):
+#         self.lib = cdll.LoadLibrary(path)
+#         self.lib.Process.argtypes = [c_void_p, c_float_p, c_int, c_int, POINTER(c_char)]
+#         self.lib.Process.restype = c_int_p
+#         self.lib.DestroyPlugin.argtypes = [c_void_p]
+#
+#     def __enter__(self):
+#         self.obj = self.lib.InitPlugin()
+#         return self
+#
+#     def process(self, a: np.ndarray, **kwargs):
+#         w = a.shape[2]
+#         h = a.shape[1]
+#         params = create_string_buffer(str.encode(dumps(kwargs)))
+#         img = a.ctypes.data_as(c_float_p)
+#         cres = self.lib.Process(self.obj, img, w, h, params)
+#         return np.ctypeslib.as_array(cres, shape=(h, w))
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         self.lib.DestroyPlugin(self.obj)
+#         return self
+#
+#
+# class NativeSeriesProcessor(BaseProcessor):
+#     def __init__(self, path):
+#         self.lib = cdll.LoadLibrary(path)
+#         self.lib.Process.argtypes = [c_void_p, c_float_p, c_int_p, c_int, POINTER(c_char)]
+#         self.lib.Process.restype = c_int_p
+#
+#     def __enter__(self):
+#         self.obj = self.lib.InitPlugin()
+#         return self
+#
+#     def process(self, a: np.ndarray, **kwargs):
+#         images_count = 1
+#         if a.ndim == 2:
+#             w = a.shape[1]
+#             h = a.shape[0]
+#             IntArray = c_int * 2
+#             images_size = IntArray(w, h)
+#         else:
+#             images_count = a.shape[0]
+#             w = a.shape[2]
+#             h = a.shape[1]
+#             IntArray = c_int * (images_count * 2)
+#             images_size = IntArray(*list([w, h] * images_count))
+#         params = create_string_buffer(str.encode(dumps(kwargs)))
+#         img = a.ctypes.data_as(c_float_p)
+#         cres = self.lib.Process(self.obj, img, images_size, images_count, params)
+#         if images_count == 1:
+#             return np.ctypeslib.as_array(cres, shape=(h, w))
+#         else:
+#             return np.ctypeslib.as_array(cres, shape=(images_count, h, w))
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         self.lib.DestroyPlugin(self.obj)
+#         return self
+
+
+class ImageProcessor(BaseProcessor):
+
+    def __init__(self, plugin: Plugin):
+        self.processor = __import__(plugin.name).Plugin()
+
+    def __enter__(self):
+        if hasattr(self.processor, "__enter__"):
+            self.processor.__enter__()
+        return self
+
+    def process(self, instance: Instance, **params):
+        ds = read_file(instance.image).pixel_array
+        result = self.processor.process(ds, **params)
         return result
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if hasattr(self.processor, "__exit__"):
+            self.processor.__exit__(exc_type, exc_val, exc_tb)
+        return self
 
 
 class PluginSaver:
 
     @staticmethod
-    def save(plugin: Plugin = None, fp=None):
+    def save(plugin: Plugin = None, fp=None, is_native=False):
         if plugin is None:
             plugin = Plugin()
         if isinstance(fp, str):
@@ -131,6 +212,7 @@ class PluginSaver:
             plugin.result = plugin_meta['result']
             plugin.tags = plugin_meta.get('tags', None)
             plugin.modalities = plugin_meta.get('modalities', None)
+            plugin.is_native = is_native
             plugin.plugin.save('', fp)
             plugin.save()
         return plugin
