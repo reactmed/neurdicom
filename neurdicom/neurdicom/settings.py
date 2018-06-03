@@ -70,14 +70,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'neurdicom.wsgi.application'
 
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'neurdicom',
+        'USER': 'neurdicom',
+        'PASSWORD': 'neurdicom',
+        'HOST': 'localhost'
     }
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -107,9 +108,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
-
 STATIC_URL = '/static/'
 # CACHE_TTL = 60 * 1
 
@@ -127,3 +125,14 @@ REST_FRAMEWORK = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
+
+DICOMWEB_SERVER = {
+    'host': '127.0.0.1',
+    'port': 8080
+}
+
+DICOM_SERVER = {
+    'host': '127.0.0.1',
+    'aet': 'NEURDICOM',
+    'port': 4242
+}
