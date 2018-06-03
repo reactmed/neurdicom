@@ -1,12 +1,9 @@
-from io import BytesIO, StringIO
-
 import pynetdicom3 as netdicom
 from pydicom.uid import *
 from pydicom import read_file, FileDataset
 from tornado import gen
 from apps.core.handlers import *
-from apps.core.utils import DicomProcessor, convert_array_to_img, DicomSaver, convert_to_8bit
-from apps.dicom_processing.views import PluginSerializer
+from apps.core.utils import *
 from apps.dicom_ws.serializers import *
 import pip
 
@@ -15,6 +12,7 @@ REPO_URL = 'git+git://github.com/reactmed/neurdicom-plugins.git'
 
 
 # GET /api/patients
+@required_auth
 class PatientListHandler(ListHandler):
     """
     Return all patients stored in database
@@ -34,6 +32,7 @@ class PatientListHandler(ListHandler):
 
 
 # GET /api/patients/:id
+@required_auth
 class PatientDetailHandler(RetrieveHandler):
     """
     Return patient by specified id
@@ -54,6 +53,7 @@ class PatientDetailHandler(RetrieveHandler):
 
 
 # GET /api/patients/:id/studies
+@required_auth
 class PatientStudiesHandler(ListHandler):
     """ Get patient's studies
 
@@ -77,6 +77,7 @@ class PatientStudiesHandler(ListHandler):
 
 
 # GET /api/studies
+@required_auth
 class StudyListHandler(ListHandler):
     """ Get studies
 
@@ -95,6 +96,7 @@ class StudyListHandler(ListHandler):
 
 
 # GET /api/studies/:id
+@required_auth
 class StudyDetailHandler(RetrieveDestroyHandler):
     """ Find study by id
 
@@ -113,6 +115,7 @@ class StudyDetailHandler(RetrieveDestroyHandler):
 
 
 # GET /api/studies/:id/series
+@required_auth
 class StudySeriesHandler(ListHandler):
     """ Find series by study
 
@@ -134,6 +137,7 @@ class StudySeriesHandler(ListHandler):
 
 
 # GET /api/series
+@required_auth
 class SeriesListHandler(ListHandler):
     """ Find series
 
@@ -151,6 +155,7 @@ class SeriesListHandler(ListHandler):
 
 
 # GET /api/series/:id
+@required_auth
 class SeriesDetailHandler(RetrieveHandler):
     """ Find series by id
 
@@ -169,6 +174,7 @@ class SeriesDetailHandler(RetrieveHandler):
 
 
 # GET /api/series/:id/instances
+@required_auth
 class SeriesInstancesHandler(ListHandler):
     """ Find instances by series
 
@@ -190,6 +196,7 @@ class SeriesInstancesHandler(ListHandler):
 
 
 # GET /api/instances
+@required_auth
 class InstanceListHandler(ListHandler):
     """ Find instances
 
@@ -206,6 +213,7 @@ class InstanceListHandler(ListHandler):
     serializer_class = InstanceSerializer
 
 
+@required_auth
 class InstanceUploadHandler(BaseNeurDicomHandler):
     def post(self, *args, **kwargs):
         for name in self.request.files:
@@ -213,6 +221,7 @@ class InstanceUploadHandler(BaseNeurDicomHandler):
 
 
 # GET /api/instances/:id
+@required_auth
 class InstanceDetailHandler(RetrieveHandler):
     """ Find instance by id
 
@@ -230,7 +239,7 @@ class InstanceDetailHandler(RetrieveHandler):
 
 
 # POST /api/instances/:id/process/by_plugin/:id
-
+@required_auth
 class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
     """ Process an instances with specified plugin (or filter)
 
@@ -265,6 +274,9 @@ class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
         instance = Instance.objects.get(pk=instance_id)
         plugin = Plugin.objects.get(pk=by_plugin_id)
         params = self.request.arguments
+        with ImageProcessor(plugin) as processor:
+            result = processor.process(instance, **params)
+
         # for k in plugin.params:
         #     if plugin.params[k].get('is_array', False):
         #         v = self.get_query_arguments(k, None)
@@ -276,7 +288,6 @@ class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
         #         else:
         #             params[k] = self._convert(v, plugin.params[k]['type'])
 
-        result = DicomProcessor.process(instance, plugin, **params)
         if plugin.result['type'] == 'IMAGE':
             if isinstance(result, BytesIO):
                 result = result.getvalue()
@@ -292,6 +303,7 @@ class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
 
 
 # GET /api/instances/:id/tags
+@required_auth
 class InstanceTagsHandler(BaseDicomJsonHandler):
     """ Find instance tags
 
@@ -313,6 +325,7 @@ class InstanceTagsHandler(BaseDicomJsonHandler):
 
 
 # GET /api/instances/:id/image
+@required_auth
 class InstanceImageHandler(BaseDicomImageHandler):
     """ Find instance image
 
@@ -334,6 +347,7 @@ class InstanceImageHandler(BaseDicomImageHandler):
 
 
 # GET /api/instances/:id/raw
+@required_auth
 class InstanceRawHandler(BaseBytesHandler):
     """ Find instance image
 
@@ -358,6 +372,7 @@ class InstanceRawHandler(BaseBytesHandler):
 
 
 # GET /api/dicom_nodes
+@required_auth
 class DicomNodeListHandler(ListCreateHandler):
     """ Find DICOM nodes
 
@@ -374,6 +389,7 @@ class DicomNodeListHandler(ListCreateHandler):
 
 
 # GET /api/dicom_nodes/:id
+@required_auth
 class DicomNodeDetailHandler(RetrieveHandler):
     """ Find DICOM node by id
 
@@ -391,6 +407,7 @@ class DicomNodeDetailHandler(RetrieveHandler):
 
 
 # GET /api/dicom_nodes/:id/echo
+@required_auth
 class DicomNodeEchoHandler(BaseJsonHandler):
     """ Make ECHO request to DICOM node
 
@@ -421,6 +438,7 @@ class DicomNodeEchoHandler(BaseJsonHandler):
 
 
 # GET /api/plugins
+@required_auth
 class PluginListHandler(ListHandler):
     """ Find plugins
 
@@ -442,6 +460,7 @@ class PluginListHandler(ListHandler):
 
 
 # GET /api/plugins/:id
+@required_auth
 class PluginDetailHandler(RetrieveDestroyHandler):
     """ Find plugin by id
 
@@ -472,6 +491,7 @@ class PluginDetailHandler(RetrieveDestroyHandler):
         })
 
 
+@required_auth
 class InstallPluginHandler(CreateHandlerMixin):
     def post(self, instance_id, *args, **kwargs):
         plugin = Plugin.objects.get(pk=instance_id)
@@ -488,16 +508,44 @@ class InstallPluginHandler(CreateHandlerMixin):
 
 
 class DICOMServer(netdicom.AE):
+    logger = logging.getLogger('DICOMServer')
 
     def __init__(self, *args, **kwargs):
         super(DICOMServer, self).__init__(*args, **kwargs)
 
     def on_c_echo(self):
-        logging.info('C-Echo succeeded')
+        logger.info('C-Echo succeeded')
         return 0x0000
 
+    def on_c_find(self, ds: Dataset):
+        logger.info('C-Find processing request')
+        logger.info(ds)
+        qr_level = ds.QueryRetrieveLevel
+        res_ds = Dataset()
+        res_ds.QueryRetrieveLevel = ds.QueryRetrieveLevel
+        res_ds.RetrieveAETitle = 'NEURDICOM'
+        res_ds.PatientName = ds.get('PatientName', 'John Doe')
+        status_ds = Dataset()
+        status_ds.Status = 0x0000
+        yield status_ds, res_ds
+
+    def on_c_move(self, ds: Dataset, move_aet):
+        logger.info('C-Find processing request')
+        logger.info(ds)
+
+    def on_c_get(self, ds: Dataset):
+        logger.info('C-Get processing request')
+        logger.info(ds)
+        res_ds = Dataset()
+        res_ds.QueryRetrieveLevel = ds.QueryRetrieveLevel
+        res_ds.RetrieveAETitle = 'NEURDICOM'
+        res_ds.PatientName = ds.get('PatientName', 'John Doe')
+        status_ds = Dataset()
+        status_ds.Status = 0xFF00
+        yield status_ds, res_ds
+
     def on_c_store(self, ds: Dataset):
-        logging.info('C-Store processing')
+        logger.info('C-Store processing')
         file_meta = Dataset()
         file_meta.TransferSyntaxUID = ImplicitVRLittleEndian
         file_meta.MediaStorageSOPClassUID = ds.SOPClassUID
@@ -508,5 +556,5 @@ class DICOMServer(netdicom.AE):
         fds.is_little_endian = True
         fds.is_implicit_VR = True
         DicomSaver.save(fds)
-        logging.info('C-Store succeeded')
+        logger.info('C-Store succeeded')
         return 0x0000

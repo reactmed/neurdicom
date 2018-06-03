@@ -36,12 +36,12 @@ class UploadDicomPage extends Component {
             headers: { 'content-type': 'multipart/form-data' }
         };
         axios.post('/api/instances/upload', form, config).then((resp) => {
-            alert('All files uploaded!');
+            alert('Все файлы загружены!');
             this.setState({
                 isPending: false
             });
         }).catch((resp) => {
-            alert('Files could not uploaded!');
+            alert('Файл не могут быть загружены!');
             this.setState({
                 isPending: false
             });
@@ -61,7 +61,7 @@ class UploadDicomPage extends Component {
                         isPending ? (
                             <Dimmer>
                                 <Loader>
-                                    Files are uploading...
+                                    Файлы загружаются...
                                 </Loader>
                             </Dimmer>
                         ) : (
@@ -71,11 +71,11 @@ class UploadDicomPage extends Component {
                     <Grid columns={'equal'}>
                         <Grid.Row>
                             <Grid.Column>
-                                <Button onClick={this.uploadFiles} positive>Upload files</Button>
+                                <Button onClick={this.uploadFiles} positive>Отправить снимки</Button>
                             </Grid.Column>
                             <Grid.Column>
                                 <Dropzone onDrop={this.addFile}>
-                                    <p>Drop DICOM files here</p>
+                                    <p>Перетащите снимки сюда</p>
                                 </Dropzone>
                             </Grid.Column>
                         </Grid.Row>
@@ -87,7 +87,7 @@ class UploadDicomPage extends Component {
                             return (
                                 <Segment>
                                     <Header>
-                                        {file.name}
+                                        {file.name} - {Math.round(file.size / (8.0 * 1024.0) * 100) / 100} Кб
                                     </Header>
                                 </Segment>
                             )

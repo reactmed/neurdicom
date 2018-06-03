@@ -4,6 +4,7 @@ import {Form, Header, Icon, Modal, Table} from "semantic-ui-react";
 import DicomNodeService from "../services/DicomNodeService";
 import Button from "semantic-ui-react/dist/es/elements/Button/Button";
 import EchoButton from "../components/dicomNodesPage/EchoButton";
+import {Translate} from "react-localize-redux";
 
 const protocolOptions = [
     {
@@ -38,112 +39,105 @@ class DicomNodesPage extends Component {
 
         return (
             <MenuContainer activeItem='DICOM nodes'>
-                <Modal ref={'echo_alert'} basic size='small' trigger={<div></div>}>
-                    <Header icon='archive' content='Archive Old Messages' className="ui center aligned header"/>
-                    <Modal.Content>
-                        <p>Your inbox is getting full, would you like us to enable automatic archiving of old
-                            messages?</p>
-                    </Modal.Content>
-                    <Modal.Actions>
-                        <Button basic color='red' inverted>
-                            <Icon name='remove'/> No
-                        </Button>
-                        <Button color='green' inverted>
-                            <Icon name='checkmark'/> Yes
-                        </Button>
-                    </Modal.Actions>
-                </Modal>
-                <Form>
-                    <Form.Group widths='equal'>
-                        <Form.Input
-                            label='Name'
-                            placeholder='Name'
-                        />
-                        <Form.Select
-                            label='Protocol'
-                            placeholder='Protocol'
-                            options={protocolOptions}
-                        />
-                    </Form.Group>
-                    <Form.Group widths='equal'>
-                        <Form.Input
-                            label='AET Title'
-                            placeholder='AET Title'
-                        />
-                    </Form.Group>
-                    <Form.Group widths='equal'>
-                        <Form.Input
-                            label='Peer AET Title'
-                            placeholder='Peer AET Title'
-                        />
-                        <Form.Input
-                            label='Peer Hostname'
-                            placeholder='Peer Hostname'
-                        />
-                        <Form.Input
-                            label='Peer Port'
-                            placeholder='Peer Port'
-                        />
-                    </Form.Group>
-                    <Form.Button positive>Save node</Form.Button>
-                </Form>
-                {
-                    dicomNodes && dicomNodes.length > 0 && (
-                        <Table>
-                            <Table.Header>
-                                <Table.Row>
-                                    <Table.HeaderCell>
-                                        Name
-                                    </Table.HeaderCell>
-                                    <Table.HeaderCell>
-                                        AET Title
-                                    </Table.HeaderCell>
-                                    <Table.HeaderCell>
-                                        Peer AET Title
-                                    </Table.HeaderCell>
-                                    <Table.HeaderCell>
-                                        Peer Host
-                                    </Table.HeaderCell>
-                                    <Table.HeaderCell>
-                                        Peer Port
-                                    </Table.HeaderCell>
-                                    <Table.HeaderCell collapsed>
-
-                                    </Table.HeaderCell>
-                                </Table.Row>
-                            </Table.Header>
-                            <Table.Body>
+                <Translate>
+                    {
+                        (translate) => (
+                            <div>
+                                <Form>
+                                    <Form.Group widths='equal'>
+                                        <Form.Input
+                                            label={translate('dicomNode.name')}
+                                            placeholder={translate('dicomNode.name')}
+                                        />
+                                        <Form.Select
+                                            label={translate('dicomNode.protocol')}
+                                            placeholder={translate('dicomNode.protocol')}
+                                            options={protocolOptions}
+                                        />
+                                    </Form.Group>
+                                    <Form.Group widths='equal'>
+                                        <Form.Input
+                                            label={translate('dicomNode.aet')}
+                                            placeholder={translate('dicomNode.aet')}
+                                        />
+                                    </Form.Group>
+                                    <Form.Group widths='equal'>
+                                        <Form.Input
+                                            label={translate('dicomNode.remoteAet')}
+                                            placeholder={translate('dicomNode.remoteAet')}
+                                        />
+                                        <Form.Input
+                                            label={translate('dicomNode.remoteHost')}
+                                            placeholder={translate('dicomNode.remoteHost')}
+                                        />
+                                        <Form.Input
+                                            label={translate('dicomNode.remotePort')}
+                                            placeholder={translate('dicomNode.remotePort')}
+                                        />
+                                    </Form.Group>
+                                    <Form.Button positive>{translate('dicomNode.add')}</Form.Button>
+                                </Form>
                                 {
-                                    dicomNodes.map(node => {
-                                        return (
-                                            <Table.Row>
-                                                <Table.Cell>
-                                                    {node.name}
-                                                </Table.Cell>
-                                                <Table.Cell>
-                                                    {node['aet_title']}
-                                                </Table.Cell>
-                                                <Table.Cell>
-                                                    {node['peer_aet_title']}
-                                                </Table.Cell>
-                                                <Table.Cell>
-                                                    {node['peer_host']}
-                                                </Table.Cell>
-                                                <Table.Cell>
-                                                    {node['peer_port']}
-                                                </Table.Cell>
-                                                <Table.Cell>
-                                                    <EchoButton
-                                                        echoUrl={`http://localhost:8080/api/dicom_nodes/${node['id']}/echo`}/>
-                                                </Table.Cell>
-                                            </Table.Row>
-                                        )
-                                    })
+                                    dicomNodes && dicomNodes.length > 0 && (
+                                        <Table>
+                                            <Table.Header>
+                                                <Table.Row>
+                                                    <Table.HeaderCell>
+                                                        {translate('dicomNode.name')}
+                                                    </Table.HeaderCell>
+                                                    <Table.HeaderCell>
+                                                        {translate('dicomNode.aet')}
+                                                    </Table.HeaderCell>
+                                                    <Table.HeaderCell>
+                                                        {translate('dicomNode.remoteAet')}
+                                                    </Table.HeaderCell>
+                                                    <Table.HeaderCell>
+                                                        {translate('dicomNode.remoteHost')}
+                                                    </Table.HeaderCell>
+                                                    <Table.HeaderCell>
+                                                        {translate('dicomNode.remotePort')}
+                                                    </Table.HeaderCell>
+                                                    <Table.HeaderCell collapsed>
+
+                                                    </Table.HeaderCell>
+                                                </Table.Row>
+                                            </Table.Header>
+                                            <Table.Body>
+                                                {
+                                                    dicomNodes.map(node => {
+                                                        return (
+                                                            <Table.Row>
+                                                                <Table.Cell>
+                                                                    {node.name}
+                                                                </Table.Cell>
+                                                                <Table.Cell>
+                                                                    {node['aet_title']}
+                                                                </Table.Cell>
+                                                                <Table.Cell>
+                                                                    {node['peer_aet_title']}
+                                                                </Table.Cell>
+                                                                <Table.Cell>
+                                                                    {node['peer_host']}
+                                                                </Table.Cell>
+                                                                <Table.Cell>
+                                                                    {node['peer_port']}
+                                                                </Table.Cell>
+                                                                <Table.Cell>
+                                                                    <EchoButton
+                                                                        echoUrl={`http://localhost:8080/api/dicom_nodes/${node['id']}/echo`}/>
+                                                                </Table.Cell>
+                                                            </Table.Row>
+                                                        )
+                                                    })
+                                                }
+                                            </Table.Body>
+                                        </Table>
+                                    )
                                 }
-                            </Table.Body>
-                        </Table>
-                    )
-                }
+                            </div>
+                        )
+                    }
+                </Translate>
             </MenuContainer>
         )
     }

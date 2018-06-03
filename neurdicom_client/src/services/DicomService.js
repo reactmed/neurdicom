@@ -40,6 +40,23 @@ export default class DicomService {
         }).then(f);
     }
 
+    static findStudiesByPatient(f, patientId) {
+        fetch(
+            `/api/patients/${patientId}/studies`
+        ).then(function (response) {
+            if (response.status >= 200 && response.status < 300) {
+                return response;
+            }
+            console.log(response.status);
+            const error = new Error(`HTTP Error ${response.statusText}`);
+            error.status = response.statusText;
+            error.response = response;
+            throw error;
+        }).then(response => {
+            return response.json();
+        }).then(f);
+    }
+
     static findStudyById(studyId, f) {
         fetch(
             `${STUDIES_ROOT_URL}/${studyId}`

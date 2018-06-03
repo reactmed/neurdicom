@@ -7,24 +7,24 @@ class LoginPage extends Component {
             <div>
                 <div style={{marginTop: '15%', marginLeft: '30%', marginRight: '30%'}}>
                     <Header as={'h3'}>
-                        Login
+                        Вход
                     </Header>
                     <Form stacked>
                         <Form.Input
-                            label='Username'
+                            label='Электронная почта'
                             icon='user'
                             iconPosition='left'
-                            placeholder='Username'
+                            placeholder='Электронная почта'
                         />
                         <Form.Input
                             type='password'
-                            label='Password'
+                            label='Пароль'
                             icon='lock'
                             iconPosition='left'
-                            placeholder='Password'
+                            placeholder='Пароль'
                         />
-                        <Form.Button primary fluid>Log In</Form.Button>
-                        <b>Forgot a password? </b><a href={'/api/reset_password'}>You can reset a password</a>
+                        <Form.Button primary fluid>Войти</Form.Button>
+                        <b>Забыли пароль? </b><a href={'/api/reset_password'}>Вы можете его восстановить</a>
                     </Form>
                 </div>
             </div>

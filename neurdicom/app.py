@@ -12,45 +12,20 @@ from pynetdicom3 import *
 os.environ['DJANGO_SETTINGS_MODULE'] = 'neurdicom.settings'
 django.setup()
 
+from neurdicom.urls import *
+from neurdicom.settings import SECRET_KEY
+
 from tornado.options import options, define, parse_command_line
 from apps.dicom_ws.handlers import *
+from apps.users.handlers import *
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 import tornado.wsgi
 
+define('aet', type=str, default='NEURDICOM')
 define('rest_port', type=int, default=8080)
-define('dicom_port', type=int, default=11112)
-
-PATIENT_LIST_URL = r'/api/patients'
-PATIENT_DETAIL_URL = r'/api/patients/(\d+)'
-PATIENT_STUDIES_URL = r'/api/patients/(\d+)/studies'
-
-STUDY_LIST_URL = r'/api/studies'
-STUDY_DETAIL_URL = r'/api/studies/(\d+)'
-STUDY_SERIES_URL = r'/api/studies/(\d+)/series'
-
-SERIES_LIST_URL = r'/api/series'
-SERIES_DETAIL_URL = r'/api/series/(\d+)'
-SERIES_INSTANCES_URL = r'/api/series/(\d+)/instances'
-
-INSTANCE_LIST_URL = r'/api/instances'
-INSTANCE_UPLOAD_URL = r'/api/instances/upload'
-INSTANCE_DETAIL_URL = r'/api/instances/(\d+)'
-INSTANCE_IMAGE_URL = r'/api/instances/(\d+)/image'
-INSTANCE_RAW_URL = r'/api/instances/(\d+)/raw'
-INSTANCE_TAGS_URL = r'/api/instances/(\d+)/tags'
-INSTANCE_PROCESS_URL = r'/api/instances/(\d+)/process/by_plugin/(\d+)'
-
-DICOM_NODE_LIST_URL = r'/api/dicom_nodes'
-DICOM_NODE_DETAIL_URL = r'/api/dicom_nodes/(\d+)'
-DICOM_NODE_ECHO_URL = r'/api/dicom_nodes/(\d+)/echo'
-
-PLUGIN_LIST_URL = r'/api/plugins'
-PLUGIN_DETAIL_URL = r'/api/plugins/(\d+)'
-PLUGIN_INSTALL_URL = r'/api/plugins/(\d+)/install'
-
-MEDIA_URL = r'/media/(.*)'
+define('dicom_port', type=int, default=4242)
 
 
 def main():
@@ -58,6 +33,13 @@ def main():
 
     rest_app = tornado.web.Application(
         [
+            # Users
+            (USER_AUTH_URL, UserAuthHandler),
+            (USER_CHECK_URL, UserCheckHandler),
+            (USER_LOGOUT_URL, UserLogoutHandler),
+            (USER_DETAIL_URL, UserDetailHandler),
+            (USER_LIST_URL, UserListHandler),
+
             # Patients
             (PATIENT_STUDIES_URL, PatientStudiesHandler),
             (PATIENT_DETAIL_URL, PatientDetailHandler),
@@ -94,12 +76,12 @@ def main():
 
             # Media download
             (MEDIA_URL, tornado.web.StaticFileHandler, {'path': 'media'})
-        ])
+        ], cookie_secret=SECRET_KEY)
     new_pid = os.fork()
     if new_pid == 0:
         try:
             logging.info('DICOM server starting at port = %d' % options.dicom_port)
-            dicom_server = DICOMServer(port=options.dicom_port,
+            dicom_server = DICOMServer(ae_title=options.aet, port=options.dicom_port,
                                        scp_sop_class=StorageSOPClassList + [VerificationSOPClass],
                                        transfer_syntax=UncompressedPixelTransferSyntaxes)
             dicom_server.start()

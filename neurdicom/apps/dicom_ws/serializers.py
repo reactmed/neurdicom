@@ -1,5 +1,4 @@
-from rest_framework.fields import SerializerMethodField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from apps.core.models import *
 
@@ -96,3 +95,38 @@ class DicomNodeSerializer(ModelSerializer):
     class Meta:
         model = DicomNode
         fields = ('id', 'name', 'aet_title', 'peer_aet_title', 'peer_host', 'peer_port')
+
+
+class PluginSerializer(ModelSerializer):
+    params = SerializerMethodField()
+    result = SerializerMethodField()
+    modalities = SerializerMethodField()
+    tags = SerializerMethodField()
+
+    def get_tags(self, plugin: Plugin):
+        if plugin.tags:
+            return list(plugin.tags)
+        return []
+
+    def get_params(self, plugin: Plugin):
+        if plugin.params:
+            return dict(plugin.params)
+        return None
+
+    def get_result(self, plugin: Plugin):
+        if plugin.result:
+            return dict(plugin.result)
+        return None
+
+    def get_modalities(self, plugin: Plugin):
+        if plugin.result:
+            return list(plugin.modalities)
+        return None
+
+    class Meta:
+        model = Plugin
+        fields = (
+            'id', 'author', 'name', 'display_name', 'version', 'tags',
+            'info', 'docs', 'params', 'result', 'type',
+            'modalities', 'is_installed'
+        )
