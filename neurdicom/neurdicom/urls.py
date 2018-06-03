@@ -18,6 +18,12 @@ from neurdicom import settings
 
 urlpatterns = static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+USER_LIST_URL = r'/api/users'
+USER_DETAIL_URL = r'/api/users/(\d+)'
+USER_AUTH_URL = r'/api/users/auth'
+USER_LOGOUT_URL = r'/api/users/logout'
+USER_CHECK_URL = r'/api/users/check'
+
 PATIENT_LIST_URL = r'/api/patients'
 PATIENT_DETAIL_URL = r'/api/patients/(\d+)'
 PATIENT_STUDIES_URL = r'/api/patients/(\d+)/studies'
@@ -47,4 +53,3 @@ PLUGIN_DETAIL_URL = r'/api/plugins/(\d+)'
 PLUGIN_INSTALL_URL = r'/api/plugins/(\d+)/install'
 
 MEDIA_URL = r'/media/(.*)'
-

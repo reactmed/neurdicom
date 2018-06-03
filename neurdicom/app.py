@@ -13,9 +13,11 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'neurdicom.settings'
 django.setup()
 
 from neurdicom.urls import *
+from neurdicom.settings import SECRET_KEY
 
 from tornado.options import options, define, parse_command_line
 from apps.dicom_ws.handlers import *
+from apps.users.handlers import *
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -31,6 +33,13 @@ def main():
 
     rest_app = tornado.web.Application(
         [
+            # Users
+            (USER_AUTH_URL, UserAuthHandler),
+            (USER_CHECK_URL, UserCheckHandler),
+            (USER_LOGOUT_URL, UserLogoutHandler),
+            (USER_DETAIL_URL, UserDetailHandler),
+            (USER_LIST_URL, UserListHandler),
+
             # Patients
             (PATIENT_STUDIES_URL, PatientStudiesHandler),
             (PATIENT_DETAIL_URL, PatientDetailHandler),
@@ -67,7 +76,7 @@ def main():
 
             # Media download
             (MEDIA_URL, tornado.web.StaticFileHandler, {'path': 'media'})
-        ])
+        ], cookie_secret=SECRET_KEY)
     new_pid = os.fork()
     if new_pid == 0:
         try:
@@ -84,7 +93,7 @@ def main():
         try:
             rest_server = tornado.httpserver.HTTPServer(rest_app)
             rest_server.bind(options.rest_port)
-            rest_server.start(0)
+            rest_server.start()
             logging.info('Rest server starting at port = %d' % options.rest_port)
             tornado.ioloop.IOLoop.current().start()
         except (KeyboardInterrupt, SystemExit):

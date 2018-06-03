@@ -1,0 +1,41 @@
+version: '1'
+services:
+  api:
+    build: ./api
+    command: ./manage.py
+    volumes:
+      - ./api:/neurdicom
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:latest
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=neurdicom
+      - POSTGRES_PASSWORD=neurdicom95root
+      - POSTGRES_DB=neurdicom
+  front:
+    build: ./front
+    command: npm run
+    volumes:
+      - ./front:/app
+      - node-modules:/app/node_modules
+    environment:
+      - HOST=0.0.0.0
+      - API_URL_BROWSER=/api
+      - API_URL=http://api:3000/
+  nginx:
+    image: nginx
+    depends_on:
+      - api
+      - front
+    ports:
+      - "8888:80"
+    volumes:
+      - ./neurdicom.dev.conf:/etc/nginx/conf.d/default.conf
+      - ./front:/mnt/front
+volumes:
+  pg-data:
+  node-modules:
+  rails-tmp:

@@ -12,6 +12,7 @@ REPO_URL = 'git+git://github.com/reactmed/neurdicom-plugins.git'
 
 
 # GET /api/patients
+@required_auth
 class PatientListHandler(ListHandler):
     """
     Return all patients stored in database
@@ -31,6 +32,7 @@ class PatientListHandler(ListHandler):
 
 
 # GET /api/patients/:id
+@required_auth
 class PatientDetailHandler(RetrieveHandler):
     """
     Return patient by specified id
@@ -51,6 +53,7 @@ class PatientDetailHandler(RetrieveHandler):
 
 
 # GET /api/patients/:id/studies
+@required_auth
 class PatientStudiesHandler(ListHandler):
     """ Get patient's studies
 
@@ -74,6 +77,7 @@ class PatientStudiesHandler(ListHandler):
 
 
 # GET /api/studies
+@required_auth
 class StudyListHandler(ListHandler):
     """ Get studies
 
@@ -92,6 +96,7 @@ class StudyListHandler(ListHandler):
 
 
 # GET /api/studies/:id
+@required_auth
 class StudyDetailHandler(RetrieveDestroyHandler):
     """ Find study by id
 
@@ -110,6 +115,7 @@ class StudyDetailHandler(RetrieveDestroyHandler):
 
 
 # GET /api/studies/:id/series
+@required_auth
 class StudySeriesHandler(ListHandler):
     """ Find series by study
 
@@ -131,6 +137,7 @@ class StudySeriesHandler(ListHandler):
 
 
 # GET /api/series
+@required_auth
 class SeriesListHandler(ListHandler):
     """ Find series
 
@@ -148,6 +155,7 @@ class SeriesListHandler(ListHandler):
 
 
 # GET /api/series/:id
+@required_auth
 class SeriesDetailHandler(RetrieveHandler):
     """ Find series by id
 
@@ -166,6 +174,7 @@ class SeriesDetailHandler(RetrieveHandler):
 
 
 # GET /api/series/:id/instances
+@required_auth
 class SeriesInstancesHandler(ListHandler):
     """ Find instances by series
 
@@ -187,6 +196,7 @@ class SeriesInstancesHandler(ListHandler):
 
 
 # GET /api/instances
+@required_auth
 class InstanceListHandler(ListHandler):
     """ Find instances
 
@@ -203,6 +213,7 @@ class InstanceListHandler(ListHandler):
     serializer_class = InstanceSerializer
 
 
+@required_auth
 class InstanceUploadHandler(BaseNeurDicomHandler):
     def post(self, *args, **kwargs):
         for name in self.request.files:
@@ -210,6 +221,7 @@ class InstanceUploadHandler(BaseNeurDicomHandler):
 
 
 # GET /api/instances/:id
+@required_auth
 class InstanceDetailHandler(RetrieveHandler):
     """ Find instance by id
 
@@ -227,7 +239,7 @@ class InstanceDetailHandler(RetrieveHandler):
 
 
 # POST /api/instances/:id/process/by_plugin/:id
-
+@required_auth
 class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
     """ Process an instances with specified plugin (or filter)
 
@@ -291,6 +303,7 @@ class InstanceProcessHandler(BaseJsonHandler, BaseBytesHandler):
 
 
 # GET /api/instances/:id/tags
+@required_auth
 class InstanceTagsHandler(BaseDicomJsonHandler):
     """ Find instance tags
 
@@ -312,6 +325,7 @@ class InstanceTagsHandler(BaseDicomJsonHandler):
 
 
 # GET /api/instances/:id/image
+@required_auth
 class InstanceImageHandler(BaseDicomImageHandler):
     """ Find instance image
 
@@ -333,6 +347,7 @@ class InstanceImageHandler(BaseDicomImageHandler):
 
 
 # GET /api/instances/:id/raw
+@required_auth
 class InstanceRawHandler(BaseBytesHandler):
     """ Find instance image
 
@@ -357,6 +372,7 @@ class InstanceRawHandler(BaseBytesHandler):
 
 
 # GET /api/dicom_nodes
+@required_auth
 class DicomNodeListHandler(ListCreateHandler):
     """ Find DICOM nodes
 
@@ -373,6 +389,7 @@ class DicomNodeListHandler(ListCreateHandler):
 
 
 # GET /api/dicom_nodes/:id
+@required_auth
 class DicomNodeDetailHandler(RetrieveHandler):
     """ Find DICOM node by id
 
@@ -390,6 +407,7 @@ class DicomNodeDetailHandler(RetrieveHandler):
 
 
 # GET /api/dicom_nodes/:id/echo
+@required_auth
 class DicomNodeEchoHandler(BaseJsonHandler):
     """ Make ECHO request to DICOM node
 
@@ -420,6 +438,7 @@ class DicomNodeEchoHandler(BaseJsonHandler):
 
 
 # GET /api/plugins
+@required_auth
 class PluginListHandler(ListHandler):
     """ Find plugins
 
@@ -441,6 +460,7 @@ class PluginListHandler(ListHandler):
 
 
 # GET /api/plugins/:id
+@required_auth
 class PluginDetailHandler(RetrieveDestroyHandler):
     """ Find plugin by id
 
@@ -471,6 +491,7 @@ class PluginDetailHandler(RetrieveDestroyHandler):
         })
 
 
+@required_auth
 class InstallPluginHandler(CreateHandlerMixin):
     def post(self, instance_id, *args, **kwargs):
         plugin = Plugin.objects.get(pk=instance_id)

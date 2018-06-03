@@ -6,11 +6,14 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.db.models import ForeignKey, OneToOneField, ManyToOneRel
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 from pydicom import Dataset
 
 import uuid
+
+from apps.core.managers import UserManager
 
 
 def image_file_path(instance, filename):
@@ -25,30 +28,29 @@ def processed_image_path(plugin, filename):
     return os.path.join('plugins', '{0}.zip'.format(str(uuid.uuid4()).replace('-', '')))
 
 
-# class User(AbstractBaseUser, PermissionsMixin):
-#     email = models.CharField(verbose_name=_('Email'), max_length=30, unique=True)
-#     name = models.CharField(verbose_name=_('Имя'), max_length=30)
-#     surname = models.CharField(verbose_name=_('Фамилия'), max_length=30)
-#     patronymic = models.CharField(verbose_name=_('Отчество'), max_length=30, blank=True, null=True)
-#     is_active = models.BooleanField(default=True)
-#     is_staff = models.BooleanField(_('Администратор?'), default=False)
-#     date_joined = models.DateTimeField(default=now())
-#
-#     objects = UserManager()
-#
-#     USERNAME_FIELD = 'email'
-#     REQUIRED_FIELDS = []
-#
-#     class Meta:
-#         db_table = 'user'
-#         verbose_name = _('Пользователь')
-#         verbose_name_plural = _('Пользователи')
-#
-#     def get_short_name(self):
-#         return '%s %s' % (self.name, self.surname)
-#
-#     def get_full_name(self):
-#         return '%s' % self.name
+class User(AbstractBaseUser, PermissionsMixin):
+    email = models.CharField(verbose_name=_('Email'), max_length=30, unique=True)
+    name = models.CharField(verbose_name=_('Name'), max_length=30)
+    surname = models.CharField(verbose_name=_('Surname'), max_length=30)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(_('Admin?'), default=False)
+    date_joined = models.DateTimeField(default=now())
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    class Meta:
+        db_table = 'users'
+        verbose_name = _('User')
+        verbose_name_plural = _('Users')
+
+    def get_short_name(self):
+        return '%s %s' % (self.name, self.surname)
+
+    def get_full_name(self):
+        return '%s' % self.name
 
 
 TAGS_TO_FIELDS = {

@@ -136,3 +136,5 @@ DICOM_SERVER = {
     'aet': 'NEURDICOM',
     'port': 4242
 }
+
+AUTH_USER_MODEL = 'core.User'

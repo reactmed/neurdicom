@@ -269,3 +269,91 @@ def convert_to_8bit(pixel_array: np.ndarray):
     flatten_img = np.floor_divide(flatten_img, (img_max - img_min + 1) / 256, casting='unsafe')
     img = flatten_img.astype(dtype=np.uint8).reshape(orig_shape)
     return img
+
+
+def required_auth(methods=None):
+    if methods is None:
+        methods = ['GET', 'POST', 'PUT', 'DELETE']
+
+    def proxy_cls(cls):
+        class AuthProxyHandler(cls):
+
+            def _auth(self, method_name):
+                auth_token = self.get_secure_cookie('neurdicom.auth')
+                if auth_token is None:
+                    self.clear()
+                    self.set_status(401)
+                    return False
+                auth_token = auth_token.decode('utf-8')
+                parts = auth_token.split('|')
+                user_id = int(parts[0])
+                email = parts[1]
+                if method_name in methods and not User.objects.filter(pk=user_id, email=email).exists():
+                    self.clear()
+                    self.set_status(401)
+                    return False
+                return True
+
+            def get(self, *args, **kwargs):
+                if self._auth('GET'):
+                    return super(AuthProxyHandler, self).get(*args, **kwargs)
+
+            def post(self, *args, **kwargs):
+                if self._auth('POST'):
+                    return super(AuthProxyHandler, self).post(*args, **kwargs)
+
+            def put(self, *args, **kwargs):
+                if self._auth('PUT'):
+                    return super(AuthProxyHandler, self).put(*args, **kwargs)
+
+            def delete(self, *args, **kwargs):
+                if self._auth('DELETE'):
+                    return super(AuthProxyHandler, self).delete(*args, **kwargs)
+
+        return AuthProxyHandler
+
+    return proxy_cls
+
+
+def required_admin(methods=None):
+    if methods is None:
+        methods = ['GET', 'POST', 'PUT', 'DELETE']
+
+    def proxy_cls(cls):
+        class AdminProxyHandler(cls):
+
+            def _auth(self, method_name):
+                auth_token = self.get_secure_cookie('neurdicom.auth')
+                if auth_token is None:
+                    self.clear()
+                    self.set_status(401)
+                    return False
+                auth_token = auth_token.decode('utf-8')
+                parts = auth_token.split('|')
+                user_id = int(parts[0])
+                email = parts[1]
+                if method_name in methods and not User.objects.filter(pk=user_id, email=email, is_staff=True).exists():
+                    self.clear()
+                    self.set_status(403)
+                    return False
+                return True
+
+            def get(self, *args, **kwargs):
+                if self._auth('GET'):
+                    return super(AdminProxyHandler, self).get(*args, **kwargs)
+
+            def post(self, *args, **kwargs):
+                if self._auth('POST'):
+                    return super(AdminProxyHandler, self).post(*args, **kwargs)
+
+            def put(self, *args, **kwargs):
+                if self._auth('PUT'):
+                    return super(AdminProxyHandler, self).put(*args, **kwargs)
+
+            def delete(self, *args, **kwargs):
+                if self._auth('DELETE'):
+                    return super(AdminProxyHandler, self).delete(*args, **kwargs)
+
+        return AdminProxyHandler
+
+    return proxy_cls

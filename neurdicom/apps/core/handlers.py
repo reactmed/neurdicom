@@ -293,7 +293,12 @@ class RetrieveHandlerMixin(BaseJsonHandler):
             self.send_error(500, message='Model queryset is not defined')
         if not self.serializer_class:
             self.send_error(500, message='Serializer class is not defined')
-        serializer = self.serializer_class(self.queryset.get(pk=instance_id))
+        try:
+            serializer = self.serializer_class(self.queryset.get(pk=instance_id))
+        except ObjectDoesNotExist:
+            self.clear()
+            self.set_status(404)
+            return
         self.write(serializer.data)
 
 

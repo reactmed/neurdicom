@@ -77,12 +77,13 @@ class Command(BaseCommand):
                 self._local_install(f)
 
     def _install_from_github(self, plugins, index=False, upgrade=True, validate=False):
-        g = Github('f90abb94c40454aa75d7bc3e2e77f9ca06a68588')
+        g = Github('39017bebb8fda61c3c75b38ec33101496484db25')
         repo = g.get_organization(ORG).get_repo(REPO)
         if index:
             root = repo.get_contents('')
             for member in root:
                 if member.type == 'dir' and member.path not in plugins:
+                    print(member.path)
                     meta_url = repo.get_contents('%s/META.json' % member.path).download_url
                     with urlopen(meta_url) as meta_file:
                         meta = loads(meta_file.read())
