@@ -1,0 +1,37 @@
+{
+  "author": "Roman Yarnykh",
+  "version": "1.0.0",
+  "info": "Extract tumor from brain MRI",
+  "name": "brain_tumor_segment",
+  "docs": "Extract tumor from brain MRI",
+  "tags": [
+    "DICOM",
+    "Tumor segmentation"
+  ],
+  "modalities": [
+    "MR"
+  ],
+  "params": {
+    "median_radius": {
+      "type": "int"
+    },
+    "num_pass": {
+      "type": "int"
+    },
+    "threshold": {
+      "type": "float"
+    },
+    "window": {
+      "type": "int",
+      "is_array": true
+    },
+    "iterations": {
+      "type": "int"
+    }
+  },
+  "result": {
+    "type": "IMAGE",
+    "bits": 16,
+    "color_space": "MONOCHROME"
+  }
+}

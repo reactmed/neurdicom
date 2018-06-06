@@ -138,3 +138,5 @@ DICOM_SERVER = {
 }
 
 AUTH_USER_MODEL = 'core.User'
+
+REQUIRE_AUTH = False

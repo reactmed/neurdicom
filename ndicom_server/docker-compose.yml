@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:10.1
+    restart: always
+    environment:
+      - POSTGRES_USER=neurdicom
+      - POSTGRES_PASSWORD=neurdicom
+      - POSTGRES_DB=neurdicom
+    volumes:
+      - postgres_data:/var/lib/postgresl/data/
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+
+#  web:
+#    build: .
+#    command: python /code/manage.py migrate
+#    command: python /code/app.py
+#    volumes:
+#      - .:/code
+#    ports:
+#      - "8080:8080"
+#    depends_on:
+#      - db
+
+volumes:
+  postgres_data:
