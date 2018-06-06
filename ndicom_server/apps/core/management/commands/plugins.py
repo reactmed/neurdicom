@@ -7,10 +7,10 @@ import tarfile as tar
 
 import pip
 from django.core.management import BaseCommand, CommandParser
-from github import Github
+# from github import Github
 
 from apps.core.models import Plugin
-import neurdicom.settings as settings
+# import neurdicom.settings as settings
 
 ORG = 'reactmed'
 REPO = 'neurdicom-plugins'
@@ -77,58 +77,58 @@ class Command(BaseCommand):
             for f in files:
                 self._local_install(f)
 
-    def _install_from_github(self, plugins, index=False, upgrade=True, validate=False):
-        g = Github(settings.GITHUB_TOKEN)
-        repo = g.get_organization(ORG).get_repo(REPO)
-        if index:
-            root = repo.get_contents('')
-            for member in root:
-                if member.type == 'dir' and member.path not in plugins:
-                    print(member.path)
-                    meta_url = repo.get_contents('%s/META.json' % member.path).download_url
-                    with urlopen(meta_url) as meta_file:
-                        meta = loads(meta_file.read())
-                        plugin = Plugin(
-                            author=meta['author'],
-                            name=meta['name'],
-                            display_name=meta['display_name'],
-                            version=meta.get('version', '1.0'),
-                            info=meta.get('info', None),
-                            docs=meta.get('docs', None),
-                            modalities=meta.get('modalities', []),
-                            tags=meta.get('tags', []),
-                            params=meta.get('params', []),
-                            result=meta['result']
-                        )
-                        plugin.save()
-
-        for plugin in plugins:
-            if upgrade:
-                pip.main(['install', '--upgrade', '%s#subdirectory=%s' % (REPO_URL, plugin)])
-            else:
-                pip.main(['install', '%s#subdirectory=%s' % (REPO_URL, plugin)])
-            if find_spec(plugin) is None:
-                raise ModuleNotFoundError('%s was not installed!' % plugin)
-            if validate:
-                self._validate_plugin(plugin)
-
-            meta_url = repo.get_contents('%s/META.json' % plugin).download_url
-            with urlopen(meta_url) as meta_file:
-                meta = loads(meta_file.read())
-                plugin = Plugin()
-                plugin.author = meta['author']
-                plugin.name = meta['name']
-                plugin.display_name = meta['display_name']
-                plugin.version = meta.get('version', '1.0')
-                plugin.info = meta.get('info', None)
-                plugin.docs = meta.get('docs', None)
-                plugin.modalities = meta.get('modalities', [])
-                plugin.tags = meta.get('tags', [])
-                plugin.params = meta.get('params', [])
-                plugin.result = meta['result']
-                plugin.is_installed = True
-                plugin.save()
-            self.stdout.write('=> %s installed' % plugin)
+    # def _install_from_github(self, plugins, index=False, upgrade=True, validate=False):
+    #     g = Github(settings.GITHUB_TOKEN)
+    #     repo = g.get_organization(ORG).get_repo(REPO)
+    #     if index:
+    #         root = repo.get_contents('')
+    #         for member in root:
+    #             if member.type == 'dir' and member.path not in plugins:
+    #                 print(member.path)
+    #                 meta_url = repo.get_contents('%s/META.json' % member.path).download_url
+    #                 with urlopen(meta_url) as meta_file:
+    #                     meta = loads(meta_file.read())
+    #                     plugin = Plugin(
+    #                         author=meta['author'],
+    #                         name=meta['name'],
+    #                         display_name=meta['display_name'],
+    #                         version=meta.get('version', '1.0'),
+    #                         info=meta.get('info', None),
+    #                         docs=meta.get('docs', None),
+    #                         modalities=meta.get('modalities', []),
+    #                         tags=meta.get('tags', []),
+    #                         params=meta.get('params', []),
+    #                         result=meta['result']
+    #                     )
+    #                     plugin.save()
+    #
+    #     for plugin in plugins:
+    #         if upgrade:
+    #             pip.main(['install', '--upgrade', '%s#subdirectory=%s' % (REPO_URL, plugin)])
+    #         else:
+    #             pip.main(['install', '%s#subdirectory=%s' % (REPO_URL, plugin)])
+    #         if find_spec(plugin) is None:
+    #             raise ModuleNotFoundError('%s was not installed!' % plugin)
+    #         if validate:
+    #             self._validate_plugin(plugin)
+    #
+    #         meta_url = repo.get_contents('%s/META.json' % plugin).download_url
+    #         with urlopen(meta_url) as meta_file:
+    #             meta = loads(meta_file.read())
+    #             plugin = Plugin()
+    #             plugin.author = meta['author']
+    #             plugin.name = meta['name']
+    #             plugin.display_name = meta['display_name']
+    #             plugin.version = meta.get('version', '1.0')
+    #             plugin.info = meta.get('info', None)
+    #             plugin.docs = meta.get('docs', None)
+    #             plugin.modalities = meta.get('modalities', [])
+    #             plugin.tags = meta.get('tags', [])
+    #             plugin.params = meta.get('params', [])
+    #             plugin.result = meta['result']
+    #             plugin.is_installed = True
+    #             plugin.save()
+    #         self.stdout.write('=> %s installed' % plugin)
 
     def _install_from_pypi(self, plugin_names, upgrade=True):
         with urlopen('https://raw.githubusercontent.com/reactmed/neurdicom-plugins/master/REPO_META.json') as meta_file:
@@ -210,8 +210,8 @@ class Command(BaseCommand):
             if mode == 'LOCAL':
                 for location in locations:
                     self._local_install(location)
-            elif mode == 'GITHUB':
-                self._install_from_github(locations, index, upgrade, validate)
+            # elif mode == 'GITHUB':
+            #     self._install_from_github(locations, index, upgrade, validate)
             elif mode == 'PYPI':
                 self._install_from_pypi(locations, upgrade=upgrade)
             self.stdout.write('Installing plugins completed!')
