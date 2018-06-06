@@ -140,3 +140,5 @@ DICOM_SERVER = {
 AUTH_USER_MODEL = 'core.User'
 
 REQUIRE_AUTH = False
+
+GITHUB_TOKEN = "afdcb822d7dca257c81b271db50d4d35edbed73d"

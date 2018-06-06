@@ -7,6 +7,7 @@ from django.core.management import BaseCommand, CommandParser
 from github import Github
 
 from apps.core.models import Plugin
+import neurdicom.settings as settings
 
 ORG = 'reactmed'
 REPO = 'neurdicom-plugins'
@@ -38,7 +39,7 @@ class Command(BaseCommand):
             for plugin in Plugin.objects.all():
                 plugin.plugin.delete()
                 plugin.delete()
-        g = Github('39017bebb8fda61c3c75b38ec33101496484db25')
+        g = Github(settings.GITHUB_TOKEN)
         repo = g.get_organization(ORG).get_repo(REPO)
         if index:
             root = repo.get_contents('')

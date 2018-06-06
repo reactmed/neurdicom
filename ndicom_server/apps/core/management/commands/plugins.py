@@ -10,6 +10,7 @@ from django.core.management import BaseCommand, CommandParser
 from github import Github
 
 from apps.core.models import Plugin
+import neurdicom.settings as settings
 
 ORG = 'reactmed'
 REPO = 'neurdicom-plugins'
@@ -77,7 +78,7 @@ class Command(BaseCommand):
                 self._local_install(f)
 
     def _install_from_github(self, plugins, index=False, upgrade=True, validate=False):
-        g = Github('39017bebb8fda61c3c75b38ec33101496484db25')
+        g = Github(settings.GITHUB_TOKEN)
         repo = g.get_organization(ORG).get_repo(REPO)
         if index:
             root = repo.get_contents('')
@@ -128,6 +129,30 @@ class Command(BaseCommand):
                 plugin.is_installed = True
                 plugin.save()
             self.stdout.write('=> %s installed' % plugin)
+
+    def _install_from_pypi(self, plugin_names, upgrade=True):
+        with urlopen('https://raw.githubusercontent.com/reactmed/neurdicom-plugins/master/REPO_META.json') as meta_file:
+            plugins = loads(meta_file.read())['plugins']
+            for plugin in plugins:
+                if plugin['name'] in plugin_names:
+                    if upgrade:
+                        pip.main(['install', '--upgrade', plugin['name']])
+                    else:
+                        pip.main(['install', plugin['name']])
+                    meta = plugin['meta']
+                    plugin_ = Plugin()
+                    plugin_.author = meta['author']
+                    plugin_.name = plugin['name']
+                    plugin_.display_name = meta['display_name']
+                    plugin_.version = meta.get('version', '1.0')
+                    plugin_.info = meta.get('info', None)
+                    plugin_.docs = meta.get('docs', None)
+                    plugin_.modalities = meta.get('modalities', [])
+                    plugin_.tags = meta.get('tags', [])
+                    plugin_.params = meta.get('params', [])
+                    plugin_.result = meta['result']
+                    plugin_.is_installed = True
+                    plugin_.save()
 
     def _uninstall_plugins(self, plugin_names):
         for plugin_name in plugin_names:
@@ -187,8 +212,6 @@ class Command(BaseCommand):
                     self._local_install(location)
             elif mode == 'GITHUB':
                 self._install_from_github(locations, index, upgrade, validate)
-            elif mode == 'PYPA':
-                raise ValueError(
-                    'Installing from https://pypi.org/ is not supported yet :(. In future version this will '
-                    'be included.')
+            elif mode == 'PYPI':
+                self._install_from_pypi(locations, upgrade=upgrade)
             self.stdout.write('Installing plugins completed!')
