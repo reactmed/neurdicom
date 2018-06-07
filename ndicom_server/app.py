@@ -77,19 +77,34 @@ def main():
             # Media download
             (MEDIA_URL, tornado.web.StaticFileHandler, {'path': 'media'})
         ], cookie_secret=settings.SECRET_KEY)
-    new_pid = os.fork()
-    if new_pid == 0:
-        try:
-            logging.info('DICOM server starting at port = %d' % options.dicom_port)
-            dicom_server = DICOMServer(ae_title=settings.DICOM_SERVER['aet'], port=settings.DICOM_SERVER['port'],
-                                       scp_sop_class=StorageSOPClassList + [VerificationSOPClass],
-                                       transfer_syntax=UncompressedPixelTransferSyntaxes)
-            dicom_server.start()
-        except (KeyboardInterrupt, SystemExit):
-            logging.info('DICOM server finishing...')
-            logging.info('Child process exiting...')
-            sys.exit(0)
-    elif new_pid > 0:
+    if settings.RUN_DICOM:
+        new_pid = os.fork()
+        if new_pid == 0:
+            try:
+                logging.info('DICOM server starting at port = %d' % options.dicom_port)
+                dicom_server = DICOMServer(ae_title=settings.DICOM_SERVER['aet'], port=settings.DICOM_SERVER['port'],
+                                           scp_sop_class=StorageSOPClassList + [VerificationSOPClass],
+                                           transfer_syntax=UncompressedPixelTransferSyntaxes)
+                dicom_server.start()
+            except (KeyboardInterrupt, SystemExit):
+                logging.info('DICOM server finishing...')
+                logging.info('Child process exiting...')
+                sys.exit(0)
+        elif new_pid > 0:
+            try:
+                rest_server = tornado.httpserver.HTTPServer(rest_app)
+                rest_server.bind(settings.DICOMWEB_SERVER['port'])
+                rest_server.start()
+                logging.info('Rest server starting at port = %d' % options.rest_port)
+                tornado.ioloop.IOLoop.current().start()
+            except (KeyboardInterrupt, SystemExit):
+                logging.info('Rest server finishing...')
+                os.kill(new_pid, signal.SIGINT)
+                logging.info('Parent process exiting...')
+                sys.exit(0)
+        else:
+            logging.error('Can not fork any processes')
+    else:
         try:
             rest_server = tornado.httpserver.HTTPServer(rest_app)
             rest_server.bind(settings.DICOMWEB_SERVER['port'])
@@ -98,11 +113,8 @@ def main():
             tornado.ioloop.IOLoop.current().start()
         except (KeyboardInterrupt, SystemExit):
             logging.info('Rest server finishing...')
-            os.kill(new_pid, signal.SIGINT)
             logging.info('Parent process exiting...')
             sys.exit(0)
-    else:
-        logging.error('Can not fork any processes')
 
 
 if __name__ == '__main__':

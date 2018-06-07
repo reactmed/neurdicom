@@ -41,4 +41,3 @@ rm -rf build
 npm run build
 npm install -g serve
 server -s build
-

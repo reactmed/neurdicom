@@ -22,7 +22,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'z*l%m%=x3!*y8rp7pk)l&r@_!(q6=vn0gk)9+0q&3vno-@9ck&'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -73,12 +73,13 @@ WSGI_APPLICATION = 'neurdicom.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'neurdicom',
-        'USER': 'neurdicom',
-        'PASSWORD': 'neurdicom',
-        'HOST': 'localhost'
+        'NAME': os.environ.get('DB_NAME', 'neurdicom'),
+        'USER': os.environ.get('DB_USER', 'neurdicom'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'neurdicom'),
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
     }
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -140,5 +141,6 @@ DICOM_SERVER = {
 AUTH_USER_MODEL = 'core.User'
 
 REQUIRE_AUTH = False
+RUN_DICOM = False
 
 GITHUB_TOKEN = "afdcb822d7dca257c81b271db50d4d35edbed73d"
