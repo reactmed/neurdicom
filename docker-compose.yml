@@ -1,41 +1,57 @@
-version: '1'
+version: '2'
 services:
-  api:
-    build: ./api
-    command: ./manage.py
-    volumes:
-      - ./api:/neurdicom
-    depends_on:
-      - postgres
   postgres:
     image: postgres:latest
     volumes:
       - pg-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=neurdicom
-      - POSTGRES_PASSWORD=neurdicom95root
+      - POSTGRES_PASSWORD=neurdicom
       - POSTGRES_DB=neurdicom
-  front:
-    build: ./front
-    command: npm run
+    ports:
+      - "5432:5432"
+  api:
+    build: ./ndicom_server
+    command: python ./app.py
     volumes:
-      - ./front:/app
-      - node-modules:/app/node_modules
+      # - ./ndicom_server:/app
+      - ./images:/images
     environment:
-      - HOST=0.0.0.0
-      - API_URL_BROWSER=/api
-      - API_URL=http://api:3000/
+      - DB_NAME=neurdicom
+      - DB_USER=neurdicom
+      - DB_PASSWORD=neurdicom
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+      - "4242:4242"
+  # front:
+  #   build: ./ndicom_client
+  #   # command: npm start
+  #   volumes:
+  #     - ./ndicom_client:/app
+  #     - node-modules:/app/node_modules
+  #   environment:
+  #     - API_HOST=api
+  #     - API_URL_BROWSER=/api
+  #     - API_URL=http://api:3000/
+  #     - API_PORT=8080
+  #   ports:
+  #     - "3000:3000"
   nginx:
     image: nginx
     depends_on:
       - api
-      - front
+      # - front
     ports:
-      - "8888:80"
+      - "80:80"
     volumes:
-      - ./neurdicom.dev.conf:/etc/nginx/conf.d/default.conf
-      - ./front:/mnt/front
+      - ./neurdicom.conf:/etc/nginx/conf.d/default.conf
+      - ./ndicom_client/build:/mnt/front
+    expose:
+      - "80"
 volumes:
   pg-data:
-  node-modules:
-  rails-tmp:
+  # node-modules:
