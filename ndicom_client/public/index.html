@@ -346,6 +346,7 @@
 
     uniform float kernel[9];
     uniform vec2 offset[9];
+    uniform vec2 imgSize;
 
     float textureSize;
 
@@ -403,7 +404,7 @@
     }
 
     vec3 apply(in vec2 coord, in sampler2D t){
-        float threshold = 0.4;
+        float threshold = 0.2;
         vec3 x = sobel_x(coord, t);
         vec3 y = sobel_y(coord, t);
         vec3 val = sqrt(x*x + y*y);
@@ -411,9 +412,9 @@
         float r = inp.r;
         float g = inp.g;
         float b = inp.b;
-        r = val.x > threshold ? 0.0 : r;
-        g = val.y > threshold ? 0.0 : g;
-        b = val.z > threshold ? 0.0 : b;
+        r = val.x > threshold ? 0.0 : 1.0;
+        g = val.y > threshold ? 0.0 : 1.0;
+        b = val.z > threshold ? 0.0 : 1.0;
         return gray(vec3(r, g, b));
     }
 
@@ -433,6 +434,7 @@ varying vec2 vUv;
 
 uniform float kernel[9];
 uniform vec2 offset[9];
+uniform vec2 imgSize;
 
 vec3 apply(in sampler2D colorTexture, in vec2 texcoord)
 {
@@ -464,6 +466,7 @@ varying vec2 vUv;
 
 uniform float kernel[9];
 uniform vec2 offset[9];
+uniform vec2 imgSize;
 
 const vec3 factor = vec3(0.27, 0.67, 0.06);
 
@@ -496,6 +499,7 @@ void main(void)
     varying vec2 vUv;
 
     #define KERNEL_SIZE 9
+    uniform vec2 imgSize;
 
     uniform float kernel[9];
     uniform vec2 offset[9];
@@ -508,14 +512,56 @@ void main(void)
 
     vec3 apply(in sampler2D colorTexture, in vec2 texcoord)
     {
-        vec2 pstep = vec2(1.0) / vec2(512.0) * 1.0;
+        float pstepX = 1.0 / imgSize.x * 1.0;
+        float pstepY = 1.0 / imgSize.y * 1.0;
         vec3 res  = vec3(0.0);
-        res += gray(texture2D(colorTexture, texcoord + vec2(1.0, -1.0) * pstep).rgb);
-        res += gray(texture2D(colorTexture, texcoord + vec2(-1.0, 0.0) * pstep).rgb);
-        res -= 4.0 * gray(texture2D(colorTexture, texcoord + vec2(1.0, -1.0) * pstep).rgb);
-        res += gray(texture2D(colorTexture, texcoord + vec2(1.0, 0.0) * pstep).rgb);
-        res += gray(texture2D(colorTexture, texcoord + vec2(0.0, 1.0) * pstep).rgb);
+        res += gray(texture2D(colorTexture, texcoord + vec2(pstepX, -pstepY)).rgb);
+        res += gray(texture2D(colorTexture, texcoord + vec2(-pstepX, 0.0)).rgb);
+        res -= 4.0 * gray(texture2D(colorTexture, texcoord + vec2(pstepX, -pstepY)).rgb);
+        res += gray(texture2D(colorTexture, texcoord + vec2(pstepX, 0.0)).rgb);
+        res += gray(texture2D(colorTexture, texcoord + vec2(0.0, pstepY)).rgb);
         return vec3(res);
+    }
+
+    void main(void)
+    {
+        vec3 texel = apply(texture, vUv);
+        gl_FragColor = vec4(texel, 1.0);
+    }
+</script>
+
+<script id="medianBlurFrag" type="x-shader/x-fragment">
+    uniform sampler2D texture;
+
+    varying vec2 vUv;
+    uniform vec2 imgSize;
+
+    #define KERNEL_SIZE 9
+
+    float ns[KERNEL_SIZE];
+
+    vec3 apply(in sampler2D colorTexture, in vec2 texcoord)
+    {
+        float pstepX = 1.0 / imgSize.x * 1.0;
+        float pstepY = 1.0 / imgSize.y * 1.0;
+        vec3 res  = vec3(0.0);
+
+        for(int i = -1; i <= 1; i++){
+            for(int j = -1; j <= 1; j++){
+                ns[(1 + i) * 3 + j] = texture2D(colorTexture, texcoord + vec2(float(i) * pstepX, float(j) * pstepY)).r;
+            }
+        }
+
+        for(int i = 1; i < KERNEL_SIZE; i++){
+            for(int j = 0; j < KERNEL_SIZE - 1; j++){
+                if(ns[j] > ns[i]){
+                   float swap = ns[j];
+                   ns[j] = ns[i];
+                   ns[i] = swap;
+                }
+            }
+        }
+        return vec3(ns[KERNEL_SIZE / 2]);
     }
 
     void main(void)

@@ -2,9 +2,11 @@ import json
 from abc import abstractmethod
 from io import BytesIO
 from json import JSONEncoder
+from urllib.request import urlopen
 from zipfile import ZipFile
 
 import numpy as np
+import pip
 from PIL import Image
 from pydicom import Sequence
 from pydicom import read_file
@@ -382,3 +384,91 @@ def required_admin(methods):
         return orig_cls
 
     return proxy_cls
+
+
+def render_exception(orig_cls):
+    orig_get = orig_cls.get
+    orig_post = orig_cls.post
+    orig_put = orig_cls.put
+    orig_delete = orig_cls.delete
+
+    def get(self, *args, **kwargs):
+        try:
+            return orig_get(self, *args, **kwargs)
+        except Exception as e:
+            RequestHandler.set_status(self, 500)
+            RequestHandler.set_header(self, 'Content-Type', 'application/json')
+            RequestHandler.set_header(self, 'Server', 'NeurDICOM')
+            RequestHandler.write(self, json.dumps({
+                'message': str(e)
+            }))
+            RequestHandler.finish(self)
+
+    def post(self, *args, **kwargs):
+        try:
+            return orig_post(self, *args, **kwargs)
+        except Exception as e:
+            RequestHandler.set_status(self, 500)
+            RequestHandler.set_header(self, 'Content-Type', 'application/json')
+            RequestHandler.set_header(self, 'Server', 'NeurDICOM')
+            RequestHandler.write(self, json.dumps({
+                'message': str(e)
+            }))
+            RequestHandler.finish(self)
+
+    def put(self, *args, **kwargs):
+        try:
+            return orig_put(self, *args, **kwargs)
+        except Exception as e:
+            RequestHandler.set_status(self, 500)
+            RequestHandler.set_header(self, 'Content-Type', 'application/json')
+            RequestHandler.set_header(self, 'Server', 'NeurDICOM')
+            RequestHandler.write(self, json.dumps({
+                'message': str(e)
+            }))
+            RequestHandler.finish(self)
+
+    def delete(self, *args, **kwargs):
+        try:
+            return orig_delete(self, *args, **kwargs)
+        except Exception as e:
+            RequestHandler.set_status(self, 500)
+            RequestHandler.set_header(self, 'Content-Type', 'application/json')
+            RequestHandler.set_header(self, 'Server', 'NeurDICOM')
+            RequestHandler.write(self, json.dumps({
+                'message': str(e)
+            }))
+            RequestHandler.finish(self)
+
+    orig_cls.get = get
+    orig_cls.post = post
+    orig_cls.put = put
+    orig_cls.delete = delete
+    return orig_cls
+
+
+def install_from_pypi(plugin_name, upgrade=True):
+    with urlopen('https://raw.githubusercontent.com/reactmed/neurdicom-plugins/master/REPO_META.json') as meta_file:
+        plugins = json.loads(meta_file.read())['plugins']
+        for plugin in plugins:
+            if plugin['name'] == plugin_name:
+                if upgrade:
+                    ret = pip.main(['install', '--upgrade', plugin['name']])
+                else:
+                    ret = pip.main(['install', plugin['name']])
+                if ret > 0:
+                    raise ValueError('Плагин %s не найден на сайте pypi.org' % plugin_name)
+                meta = plugin['meta']
+                plugin_ = Plugin()
+                plugin_.author = meta['author']
+                plugin_.name = plugin['name']
+                plugin_.display_name = meta['display_name']
+                plugin_.version = meta.get('version', '1.0')
+                plugin_.info = meta.get('info', None)
+                plugin_.docs = meta.get('docs', None)
+                plugin_.modalities = meta.get('modalities', [])
+                plugin_.tags = meta.get('tags', [])
+                plugin_.params = meta.get('params', [])
+                plugin_.result = meta['result']
+                plugin_.is_installed = True
+                return plugin_.save()

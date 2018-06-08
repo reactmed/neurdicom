@@ -166,7 +166,7 @@ class ProcessingPage extends Component {
                 let pixelSize = parseFloat(instance['pixel_spacing'].split(', ')[0].replace('[', '').replace("'", ''));
                 let area = Math.sqrt(count) * pixelSize;
                 console.log(area);
-                // alert(`Опухоль имеет площадь ${area} mm^2`);
+                alert(`Опухоль имеет площадь ${area} mm^2`);
                 this.setState({
                     mask: mask,
                     isPending: false

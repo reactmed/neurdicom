@@ -27,6 +27,8 @@ class PluginItem extends Component {
 
     render() {
         const plugin = this.props.plugin;
+        console.log('PLUGIN ITEM');
+        console.log(plugin);
         return (
             <Translate>
                 {
@@ -38,7 +40,7 @@ class PluginItem extends Component {
                             <br/>
                             <b>{translate('plugin.version')}: </b>{plugin['version']}
                             <br/>
-                            <b>{translate('plugin.tags')}: </b>{plugin['tags'].join(', ')}
+                            <b>{translate('plugin.tags')}: </b>{(plugin['tags'] || []).join(', ')}
                             <br/>
                             <b>{translate('plugin.modalities')}: </b>{plugin['modalities'].join(', ')}
                             <Divider/>

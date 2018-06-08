@@ -94,7 +94,7 @@ class InstanceDetailSerializer(ModelSerializer):
 class DicomNodeSerializer(ModelSerializer):
     class Meta:
         model = DicomNode
-        fields = ('id', 'name', 'aet_title', 'peer_aet_title', 'peer_host', 'peer_port')
+        fields = ('id', 'name', 'remote_url', 'instances_url', 'instance_file_url')
 
 
 class PluginSerializer(ModelSerializer):

@@ -47,9 +47,10 @@ INSTANCE_PROCESS_URL = r'/api/instances/(\d+)/process/by_plugin/(\d+)'
 DICOM_NODE_LIST_URL = r'/api/dicom_nodes'
 DICOM_NODE_DETAIL_URL = r'/api/dicom_nodes/(\d+)'
 DICOM_NODE_ECHO_URL = r'/api/dicom_nodes/(\d+)/echo'
+DICOM_NODE_INSTANCES_URL = r'/api/dicom_nodes/(\d+)/instances'
 
 PLUGIN_LIST_URL = r'/api/plugins'
 PLUGIN_DETAIL_URL = r'/api/plugins/(\d+)'
-PLUGIN_INSTALL_URL = r'/api/plugins/(\d+)/install'
+PLUGIN_INSTALL_URL = r'/api/plugins/([a-zA-Z]([a-zA-Z]|-|_|\d)*)/install'
 
 MEDIA_URL = r'/media/(.*)'

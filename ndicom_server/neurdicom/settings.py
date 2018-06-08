@@ -80,7 +80,6 @@ DATABASES = {
     }
 }
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -129,13 +128,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 DICOMWEB_SERVER = {
     'host': '127.0.0.1',
-    'port': 8080
+    'port': 8080,
+    'num_processes': 0
 }
 
 DICOM_SERVER = {
     'host': '127.0.0.1',
     'aet': 'NEURDICOM',
-    'port': 4242
+    'port': 8842
 }
 
 AUTH_USER_MODEL = 'core.User'

@@ -2,6 +2,8 @@
 import logging
 import signal
 
+from tornado.httpclient import AsyncHTTPClient
+
 logging.basicConfig(format='%(levelname)s: %(asctime)s - %(message)s', datefmt='%d.%m.%Y %I:%M:%S')
 
 import django
@@ -67,7 +69,8 @@ def main():
             # Dicom Nodes
             (DICOM_NODE_DETAIL_URL, DicomNodeDetailHandler),
             (DICOM_NODE_LIST_URL, DicomNodeListHandler),
-            (DICOM_NODE_ECHO_URL, DicomNodeEchoHandler),
+            # (DICOM_NODE_ECHO_URL, DicomNodeEchoHandler),
+            (DICOM_NODE_INSTANCES_URL, DicomNodeInstancesLoadHandler),
 
             # Plugins
             (PLUGIN_DETAIL_URL, PluginDetailHandler),
@@ -77,11 +80,12 @@ def main():
             # Media download
             (MEDIA_URL, tornado.web.StaticFileHandler, {'path': 'media'})
         ], cookie_secret=settings.SECRET_KEY)
+    rest_port = options.rest_port or settings.DICOMWEB_SERVER['port']
     if settings.RUN_DICOM:
         new_pid = os.fork()
         if new_pid == 0:
             try:
-                logging.info('DICOM server starting at port = %d' % options.dicom_port)
+                logging.info('DICOM server starting at port = %d' % settings.DICOM_SERVER['port'])
                 dicom_server = DICOMServer(ae_title=settings.DICOM_SERVER['aet'], port=settings.DICOM_SERVER['port'],
                                            scp_sop_class=StorageSOPClassList + [VerificationSOPClass],
                                            transfer_syntax=UncompressedPixelTransferSyntaxes)
@@ -93,9 +97,9 @@ def main():
         elif new_pid > 0:
             try:
                 rest_server = tornado.httpserver.HTTPServer(rest_app)
-                rest_server.bind(settings.DICOMWEB_SERVER['port'])
+                rest_server.bind(rest_port)
                 rest_server.start()
-                logging.info('Rest server starting at port = %d' % options.rest_port)
+                logging.info('Rest server starting at port = %d' % settings.DICOMWEB_SERVER['port'])
                 tornado.ioloop.IOLoop.current().start()
             except (KeyboardInterrupt, SystemExit):
                 logging.info('Rest server finishing...')
@@ -107,9 +111,9 @@ def main():
     else:
         try:
             rest_server = tornado.httpserver.HTTPServer(rest_app)
-            rest_server.bind(settings.DICOMWEB_SERVER['port'])
+            rest_server.bind(rest_port)
             rest_server.start()
-            logging.info('Rest server starting at port = %d' % options.rest_port)
+            logging.info('Rest server starting at port = %d' % rest_port)
             tornado.ioloop.IOLoop.current().start()
         except (KeyboardInterrupt, SystemExit):
             logging.info('Rest server finishing...')
