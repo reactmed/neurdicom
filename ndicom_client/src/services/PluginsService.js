@@ -2,7 +2,7 @@ const PLUGINS_ROOT_URL = '/api/plugins';
 
 export default class PluginsService {
     static findPlugins(f) {
-        fetch(
+        return fetch(
             PLUGINS_ROOT_URL
         ).then(function (response) {
             if (response.status >= 200 && response.status < 300) {

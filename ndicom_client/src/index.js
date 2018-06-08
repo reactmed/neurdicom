@@ -78,7 +78,11 @@ const translations = {
         remoteHost: ['Remote Host', 'Удаленный хост'],
         remotePort: ['Remote Port', 'Удаленный порт'],
         add: ['Add', 'Добавить'],
-        echo: ['Echo', 'Проверить доступность']
+        echo: ['Echo', 'Проверить доступность'],
+        remoteUrl: ['Remote URL', 'Удаленный адрес'],
+        instancesUrl: ['Instances URL', 'Адрес ресурса с изображениями'],
+        instanceFileUrl: ['Instance File URL', 'Адрес изображения'],
+        download: ['Download images', 'Скачать изображения']
     },
 
     uploadDicom: {

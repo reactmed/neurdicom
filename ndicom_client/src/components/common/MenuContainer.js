@@ -38,7 +38,8 @@ class MenuContainer extends Component {
                                         <Menu.Item as={Link} to='/dicom_nodes' name={translate('dicomNode.dicomNodes')}
                                                    active={this.props.activeItem === 'DICOM nodes'}/>
                                         <Menu.Menu position='right' inverted>
-                                            <Dropdown position={'right'} item text={translate('translation.changeLanguage')}
+                                            <Dropdown position={'right'} item
+                                                      text={translate('translation.changeLanguage')}
                                                       inverted>
                                                 <Dropdown.Menu>
                                                     <Dropdown.Item

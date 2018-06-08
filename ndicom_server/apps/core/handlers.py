@@ -255,9 +255,9 @@ class ListHandlerMixin(BaseJsonHandler):
 
     # @render_exception(exception_renders=(default_exception_render,))
     def get(self, *args, **kwargs):
-        if not self.queryset:
+        if self.queryset is None:
             self.send_error(500, message='Model queryset is not defined')
-        if not self.serializer_class:
+        if self.serializer_class is None:
             self.send_error(500, message='Serializer class is not defined')
         serializer = self.serializer_class(self.queryset.all(), many=True)
         self.write(serializer.data)
@@ -271,6 +271,8 @@ class CreateHandlerMixin(BaseJsonHandler):
 
     # @render_exception(exception_renders=(default_exception_render,))
     def post(self, *args, **kwargs):
+        if self.serializer_class is None:
+            self.send_error(500, message='Serializer class is not defined')
         serializer = self.serializer_class(data=self.request.arguments)
         if serializer.is_valid():
             serializer.save()
@@ -289,9 +291,9 @@ class RetrieveHandlerMixin(BaseJsonHandler):
 
     # @render_exception(exception_renders=(object_does_not_exist_render,))
     def get(self, instance_id, *args, **kwargs):
-        if not self.queryset:
+        if self.queryset is None:
             self.send_error(500, message='Model queryset is not defined')
-        if not self.serializer_class:
+        if self.serializer_class is None:
             self.send_error(500, message='Serializer class is not defined')
         try:
             serializer = self.serializer_class(self.queryset.get(pk=instance_id))
@@ -311,10 +313,10 @@ class UpdateHandlerMixin(BaseJsonHandler):
 
     # @render_exception(exception_renders=(default_exception_render,))
     def put(self, instance_id, *args, **kwargs):
-        if not self.queryset:
+        if self.queryset is None:
             self.send_error(500, message='Model queryset is not defined')
             return
-        if not self.serializer_class:
+        if self.serializer_class is None:
             self.send_error(500, message='Serializer class is not defined')
             return
         update_arguments = self.request.arguments
@@ -335,7 +337,7 @@ class DestroyHandlerMixin(BaseJsonHandler):
 
     # @render_exception(exception_renders=(object_does_not_exist_render,))
     def delete(self, instance_id, *args, **kwargs):
-        if not self.queryset:
+        if self.queryset is None:
             self.send_error(500, message='Model queryset is not defined')
         self.queryset.get(pk=instance_id).delete()
 

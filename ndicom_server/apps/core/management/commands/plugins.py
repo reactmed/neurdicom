@@ -10,6 +10,7 @@ from django.core.management import BaseCommand, CommandParser
 # from github import Github
 
 from apps.core.models import Plugin
+
 # import neurdicom.settings as settings
 
 ORG = 'reactmed'
@@ -175,19 +176,17 @@ class Command(BaseCommand):
                             help='Validate plugins')
         parser.add_argument('--index', action='store_true', dest='index',
                             help='Index plugins from remote repository')
-        parser.add_argument('--mode', action='store', dest='mode',
-                            help='Install mode (mode=[LOCAL|GITHUB|PYPA]). Use "LOCAL" to install local packages '
-                                 'archived as tar.gz. Use "GITHUB" to install packages from %s. Use "PYPA" to install '
-                                 'packages from https://pypi.org/' % REPO_WEBSITE_URL)
+        parser.add_argument('--local-install', action='store_true', dest='local_install',
+                            help='Install plugins locally')
 
     def handle(self, *args, **options):
         install = options.get('install', True)
+        local_install = options.get('local_install', False)
         uninstall = options.get('uninstall', False)
         upgrade = options.get('upgrade', True)
         clear = options.get('clear', False)
         validate = options.get('validate', False)
         index = options.get('index', False)
-        mode = options.get('mode', 'local')
         locations = options.get('locations', [])
         if clear:
             for plugin in Plugin.objects.all():
@@ -199,19 +198,16 @@ class Command(BaseCommand):
             return
         if install and uninstall:
             raise ValueError('Can not use both install and uninstall actions')
-        if index and (mode == 'LOCAL' or mode == 'PYPA'):
-            raise ValueError('Can not index remote packages from github.com and install local packages at same time. '
-                             'Please use either index or local arguments.')
+        if index and local_install:
+            raise ValueError('Can not index local packages')
         if uninstall:
             for location in locations:
                 self._uninstall_plugins(location)
+            self.stdout.write('Uninstalling plugins completed!')
             return
         if install:
-            if mode == 'LOCAL':
-                for location in locations:
-                    self._local_install(location)
-            # elif mode == 'GITHUB':
-            #     self._install_from_github(locations, index, upgrade, validate)
-            elif mode == 'PYPI':
-                self._install_from_pypi(locations, upgrade=upgrade)
-            self.stdout.write('Installing plugins completed!')
+            self._install_from_pypi(locations, upgrade=upgrade)
+        elif local_install:
+            for location in locations:
+                self._local_install(location)
+        self.stdout.write('Installing plugins completed!')

@@ -7,6 +7,8 @@ import 'semantic-ui-css/semantic.min.css';
 import PluginItem from "../components/pluginsPage/PluginItem";
 import * as axios from 'axios';
 
+const PLUGINS_REPO_META_URL = "https://raw.githubusercontent.com/reactmed/neurdicom-plugins/master/REPO_META.json";
+
 const patientMatcherOptions = [
     {key: 'EXACT', text: 'Exact equals', value: 'EXACT'},
     {key: 'STARTS_WITH', text: 'Starts with', value: 'STARTS_WITH'},
@@ -33,8 +35,18 @@ class PluginsPage extends Component {
     }
 
     componentWillMount = () => {
-        PluginsService.findPlugins(plugins => {
-            this.setState({plugins: plugins});
+        PluginsService.findPlugins(installedPlugins => {
+            installedPlugins = installedPlugins.reduce((pluginsMap, plugin) => {
+                pluginsMap[plugin.name] = plugin;
+                return pluginsMap;
+            }, {});
+            axios.get(PLUGINS_REPO_META_URL).then(allPlugins => {
+                allPlugins = allPlugins.data.plugins.reduce((pluginsMap, plugin) => {
+                    pluginsMap[plugin.name] = plugin.meta;
+                    return pluginsMap;
+                }, {});
+                this.setState({plugins: {...allPlugins, ...installedPlugins}});
+            });
         });
     };
 
@@ -42,30 +54,51 @@ class PluginsPage extends Component {
         axios.delete(
             `/api/plugins/${plugin['id']}`
         ).then((response) => {
-            PluginsService.findPlugins(plugins => {
-                this.setState({plugins: plugins});
+            PluginsService.findPlugins(installedPlugins => {
+                installedPlugins = installedPlugins.reduce((pluginsMap, plugin) => {
+                    pluginsMap[plugin.name] = plugin;
+                    return pluginsMap;
+                }, {});
+                axios.get(PLUGINS_REPO_META_URL).then(allPlugins => {
+                    allPlugins = allPlugins.data.plugins.reduce((pluginsMap, plugin) => {
+                        pluginsMap[plugin.name] = plugin.meta;
+                        return pluginsMap;
+                    }, {});
+                    this.setState({plugins: {...allPlugins, ...installedPlugins}});
+                });
             });
         }).catch((err) => {
-            alert(`Плагин "${plugin['display_name']}" не может быть удален!`);
+            alert(err.response.data['message']);
+            this.setState({});
         })
     };
 
     onInstallPlugin = (plugin) => {
         axios.post(
-            `/api/plugins/${plugin['id']}/install`
+            `/api/plugins/${plugin['name']}/install`
         ).then((response) => {
-            PluginsService.findPlugins(plugins => {
-                this.setState({plugins: plugins});
+            PluginsService.findPlugins(installedPlugins => {
+                installedPlugins = installedPlugins.reduce((pluginsMap, plugin) => {
+                    pluginsMap[plugin.name] = plugin;
+                    return pluginsMap;
+                }, {});
+                axios.get(PLUGINS_REPO_META_URL).then(allPlugins => {
+                    allPlugins = allPlugins.data.plugins.reduce((pluginsMap, plugin) => {
+                        pluginsMap[plugin.name] = plugin.meta;
+                        return pluginsMap;
+                    }, {});
+                    this.setState({plugins: {...allPlugins, ...installedPlugins}});
+                });
             });
         }).catch((err) => {
-            alert(`Плагин "${plugin['display_name']}" не может быть установлен!`);
+            alert(err.response.data['message']);
             this.setState({});
         })
     };
 
     render() {
-        console.log(this.state.plugins);
-        if (this.state.plugins && this.state.plugins.length > 0) {
+        const plugins = this.state.plugins;
+        if (plugins && Object.keys(plugins).length > 0) {
             return (
                 <MenuContainer activeItem='plugins'>
                     <Translate>
@@ -76,16 +109,12 @@ class PluginsPage extends Component {
                                         <Form.Group widths='equal'>
                                             <Form.Input
                                                 label={translate('plugin.name')}
-                                                action={<Dropdown button basic floating options={patientMatcherOptions}
-                                                                  defaultValue='EXACT'/>}
                                                 icon='search'
                                                 iconPosition='left'
                                                 placeholder={translate('plugin.name')}
                                             />
                                             <Form.Input
                                                 label={translate('plugin.author')}
-                                                action={<Dropdown button basic floating options={patientMatcherOptions}
-                                                                  defaultValue='EXACT'/>}
                                                 icon='search'
                                                 iconPosition='left'
                                                 placeholder={translate('plugin.author')}
@@ -93,7 +122,9 @@ class PluginsPage extends Component {
                                         </Form.Group>
                                     </Form>
                                     {
-                                        this.state.plugins.map(plugin => {
+                                        Object.keys(plugins).map(pluginName => {
+                                            const plugin = plugins[pluginName];
+                                            plugin['name'] = pluginName;
                                             return (
                                                 <PluginItem plugin={plugin} onDeletePlugin={this.onDeletePlugin}
                                                             onInstallPlugin={this.onInstallPlugin}/>

@@ -2,10 +2,14 @@ import pynetdicom3 as netdicom
 from pydicom.uid import *
 from pydicom import read_file, FileDataset
 from tornado import gen
+from tornado.httpclient import AsyncHTTPClient
+from tornado.web import asynchronous
+
 from apps.core.handlers import *
 from apps.core.utils import *
 from apps.dicom_ws.serializers import *
 import pip
+import os
 
 ECHO_SUCCESS = 0x0000
 REPO_URL = 'git+git://github.com/reactmed/neurdicom-plugins.git'
@@ -372,7 +376,7 @@ class InstanceRawHandler(BaseBytesHandler):
 
 
 # GET /api/dicom_nodes
-@required_auth(methods=['GET', 'POST'])
+# @required_auth(methods=['GET', 'POST'])
 class DicomNodeListHandler(ListCreateHandler):
     """ Find DICOM nodes
 
@@ -389,8 +393,8 @@ class DicomNodeListHandler(ListCreateHandler):
 
 
 # GET /api/dicom_nodes/:id
-@required_auth(methods=['GET'])
-class DicomNodeDetailHandler(RetrieveHandler):
+@required_auth(methods=['GET', 'DELETE'])
+class DicomNodeDetailHandler(RetrieveDestroyHandler):
     """ Find DICOM node by id
 
     Success
@@ -406,38 +410,134 @@ class DicomNodeDetailHandler(RetrieveHandler):
     serializer_class = DicomNodeSerializer
 
 
-# GET /api/dicom_nodes/:id/echo
 @required_auth(methods=['GET'])
-class DicomNodeEchoHandler(BaseJsonHandler):
-    """ Make ECHO request to DICOM node
+@render_exception
+class DicomNodeInstancesLoadHandler(BaseJsonHandler):
+    """ Load and save DICOM files from remote DICOMWeb peers
 
-    Success
+        Success
 
-        - 200 - ECHO succeeded
+            - 200 - All images saved
 
-    Failure
-        - 404 - DICOM node not found
-        - 500 - ECHO failed
-        - 401 - Not authorized user
-        - 403 - User has not permissions for retrieving patients
-    """
+        Failure
+            - 404 - DICOM node not found
+            - 401 - Not authorized user
+            - 403 - User has not permissions for retrieving patients
+        """
+
     expected_path_params = ['dicom_node_id']
 
+    @asynchronous
     def get(self, *args, **kwargs):
         dicom_node_id = self.path_params['dicom_node_id']
         dicom_node = DicomNode.objects.get(pk=dicom_node_id)
-        ae = netdicom.AE(ae_title=dicom_node.aet_title, scu_sop_class=['1.2.840.10008.1.1'])
-        assoc = ae.associate(dicom_node.peer_host, dicom_node.peer_port, ae_title=dicom_node.peer_aet_title)
-        if assoc.is_established:
-            status = assoc.send_c_echo()
-            if status.Status == ECHO_SUCCESS:
-                self.set_status(200)
-                self.finish()
-                return
-        self.send_error(500, message='Echo failed')
+        client = AsyncHTTPClient()
+        find_instance_url = '%s/%s' % (dicom_node.remote_url, dicom_node.instances_url)
+        client.fetch(find_instance_url, lambda resp: self._on_get_instances(resp, dicom_node))
 
+    @asynchronous
+    def _on_get_instances(self, response, dicom_node):
+        print('Find instances')
+        if response.code >= 400:
+            msg = {
+
+            }
+            self.set_status(response.code)
+            if response.code == 599:
+                msg['message'] = 'Удаленный сервер DICOM %s недоступен' % dicom_node.remote_url
+            if response.code == 401:
+                msg['message'] = 'Удаленный сервер DICOM %s требует авторизации' % dicom_node.remote_url
+            else:
+                msg['message'] = 'Удаленный сервер DICOM %s не может выполнить операцию' % dicom_node.remote_url
+            self.finish()
+            return
+        instances = json.loads(response.body)
+        for instance_id in instances:
+            download_image_url = '%s/%s' % (dicom_node.remote_url, dicom_node.instance_file_url)
+            download_image_url = download_image_url.replace('{id}', instance_id)
+            client = AsyncHTTPClient()
+            client.fetch(download_image_url, lambda resp: self._on_download_image(resp, dicom_node))
+        self.finish()
+
+    def _on_download_image(self, response, dicom_node):
+        print('Download image')
+        if response.code >= 400:
+            msg = {
+
+            }
+            self.set_status(response.code)
+            if response.code == 599:
+                msg['message'] = 'Удаленный сервер DICOM %s недоступен' % dicom_node.remote_url
+            if response.code == 401:
+                msg['message'] = 'Удаленный сервер DICOM %s требует авторизации' % dicom_node.remote_url
+            else:
+                msg['message'] = 'Удаленный сервер DICOM %s не может выполнить операцию' % dicom_node.remote_url
+            self.write(msg)
+            self.finish()
+            return
+        img = BytesIO(response.body)
+        img.seek(0)
+        DicomSaver.save(img)
+        print(response)
+
+
+# GET /api/dicom_nodes/:id/echo
+# @required_auth(methods=['GET'])
+# class DicomNodeEchoHandler(BaseJsonHandler):
+#     """ Make ECHO request to DICOM node
+#
+#     Success
+#
+#         - 200 - ECHO succeeded
+#
+#     Failure
+#         - 404 - DICOM node not found
+#         - 500 - ECHO failed
+#         - 401 - Not authorized user
+#         - 403 - User has not permissions for retrieving patients
+#     """
+#     expected_path_params = ['dicom_node_id']
+#
+#     def get(self, *args, **kwargs):
+#         dicom_node_id = self.path_params['dicom_node_id']
+#         dicom_node = DicomNode.objects.get(pk=dicom_node_id)
+#         ae = netdicom.AE(ae_title=dicom_node.aet_title, scu_sop_class=['1.2.840.10008.1.1'])
+#         assoc = ae.associate(dicom_node.peer_host, dicom_node.peer_port, ae_title=dicom_node.peer_aet_title)
+#         if assoc.is_established:
+#             status = assoc.send_c_echo()
+#             if status.Status == ECHO_SUCCESS:
+#                 self.set_status(200)
+#                 self.finish()
+#                 return
+#         self.send_error(500, message='Echo failed')
+
+# GET /api/dicom_nodes/:id/echo
+# @required_auth(methods=['GET'])
+# class DicomNodeEchoHandler(BaseJsonHandler):
+#     """ Make ECHO request to DICOM node
+#
+#     Success
+#
+#         - 200 - ECHO succeeded
+#
+#     Failure
+#         - 404 - DICOM node not found
+#         - 500 - ECHO failed
+#         - 401 - Not authorized user
+#         - 403 - User has not permissions for retrieving patients
+#     """
+#     expected_path_params = ['dicom_node_id']
+#
+#     def get(self, *args, **kwargs):
+#         dicom_node_id = self.path_params['dicom_node_id']
+#         dicom_node = DicomNode.objects.get(pk=dicom_node_id)
+#         resp = os.system('ping -c 1 %s:%s' % (dicom_node.peer_host, dicom_node.peer_port))
+#         if resp != 0:
+#             self.send_error(500, message='Echo failed')
 
 # GET /api/plugins
+
+
 @required_auth(methods=['GET'])
 class PluginListHandler(ListHandler):
     """ Find plugins
@@ -458,8 +558,9 @@ class PluginListHandler(ListHandler):
         plugins = serializer.data
         self.write(plugins)
 
+    # GET /api/plugins/:id
 
-# GET /api/plugins/:id
+
 @required_auth(methods=['GET', 'DELETE'])
 class PluginDetailHandler(RetrieveDestroyHandler):
     """ Find plugin by id
@@ -492,18 +593,10 @@ class PluginDetailHandler(RetrieveDestroyHandler):
 
 
 @required_auth(methods=['POST'])
+@render_exception
 class InstallPluginHandler(CreateHandlerMixin):
-    def post(self, instance_id, *args, **kwargs):
-        plugin = Plugin.objects.get(pk=instance_id)
-        if plugin.is_installed:
-            self.write_error(500)
-            self.write({
-                'message': 'Plugin is %s installed already!'
-            })
-            return
-        pip.main(['install', '--upgrade', '%s#subdirectory=%s' % (REPO_URL, plugin.name)])
-        plugin.is_installed = True
-        plugin.save()
+    def post(self, plugin_name, *args, **kwargs):
+        plugin = install_from_pypi(plugin_name)
         self.write(PluginSerializer(plugin).data)
 
 
@@ -513,38 +606,38 @@ class DICOMServer(netdicom.AE):
     def __init__(self, *args, **kwargs):
         super(DICOMServer, self).__init__(*args, **kwargs)
 
-    def on_c_echo(self):
+    def on_c_echo(self, context, info):
         logger.info('C-Echo succeeded')
         return 0x0000
 
-    def on_c_find(self, ds: Dataset):
-        logger.info('C-Find processing request')
-        logger.info(ds)
-        qr_level = ds.QueryRetrieveLevel
-        res_ds = Dataset()
-        res_ds.QueryRetrieveLevel = ds.QueryRetrieveLevel
-        res_ds.RetrieveAETitle = 'NEURDICOM'
-        res_ds.PatientName = ds.get('PatientName', 'John Doe')
-        status_ds = Dataset()
-        status_ds.Status = 0x0000
-        yield status_ds, res_ds
+    # def on_c_find(self, ds: Dataset, context, info):
+    #     logger.info('C-Find processing request')
+    #     logger.info(ds)
+    #     qr_level = ds.QueryRetrieveLevel
+    #     res_ds = Dataset()
+    #     res_ds.QueryRetrieveLevel = ds.QueryRetrieveLevel
+    #     res_ds.RetrieveAETitle = 'NEURDICOM'
+    #     res_ds.PatientName = ds.get('PatientName', 'John Doe')
+    #     status_ds = Dataset()
+    #     status_ds.Status = 0x0000
+    #     yield status_ds, res_ds
+    #
+    # def on_c_move(self, ds: Dataset, move_aet, context, info):
+    #     logger.info('C-Find processing request')
+    #     logger.info(ds)
+    #
+    # def on_c_get(self, ds: Dataset, context, info):
+    #     logger.info('C-Get processing request')
+    #     logger.info(ds)
+    #     res_ds = Dataset()
+    #     res_ds.QueryRetrieveLevel = ds.QueryRetrieveLevel
+    #     res_ds.RetrieveAETitle = 'NEURDICOM'
+    #     res_ds.PatientName = ds.get('PatientName', 'John Doe')
+    #     status_ds = Dataset()
+    #     status_ds.Status = 0xFF00
+    #     yield status_ds, res_ds
 
-    def on_c_move(self, ds: Dataset, move_aet):
-        logger.info('C-Find processing request')
-        logger.info(ds)
-
-    def on_c_get(self, ds: Dataset):
-        logger.info('C-Get processing request')
-        logger.info(ds)
-        res_ds = Dataset()
-        res_ds.QueryRetrieveLevel = ds.QueryRetrieveLevel
-        res_ds.RetrieveAETitle = 'NEURDICOM'
-        res_ds.PatientName = ds.get('PatientName', 'John Doe')
-        status_ds = Dataset()
-        status_ds.Status = 0xFF00
-        yield status_ds, res_ds
-
-    def on_c_store(self, ds: Dataset):
+    def on_c_store(self, ds: Dataset, context, info):
         logger.info('C-Store processing')
         file_meta = Dataset()
         file_meta.TransferSyntaxUID = ImplicitVRLittleEndian

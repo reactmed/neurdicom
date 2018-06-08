@@ -23,6 +23,11 @@ const filterOptions = [
         'key': 'laplacian',
         'value': 'laplacian',
         'text': 'Оператор Лапласа'
+    },
+    {
+        'key': 'medianBlur',
+        'value': 'medianBlur',
+        'text': 'Медианный фильтр'
     }
 ];
 const colorScaleOptions = [

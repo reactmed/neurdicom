@@ -254,16 +254,27 @@ class Plugin(models.Model):
     is_installed = models.BooleanField(verbose_name=_('Is installed'), default=False)
 
 
+# class DicomNode(models.Model):
+#     class Meta:
+#         db_table = 'dicom_nodes'
+#
+#     name = models.CharField(verbose_name=_('Name'), max_length=255, blank=True, null=True)
+#     aet_title = models.CharField(verbose_name=_('AET Title'), max_length=100)
+#     peer_aet_title = models.CharField(verbose_name=_('Peer AET Title'), max_length=100)
+#     peer_host = models.CharField(verbose_name=_('Peer Host'), max_length=100)
+#     peer_port = models.IntegerField(verbose_name=_('Peer Port'))
+#     protocol = models.CharField(verbose_name=_('Protocol Type'), max_length=20, default='DICOMWEB')
+
+
 class DicomNode(models.Model):
     class Meta:
         db_table = 'dicom_nodes'
 
     name = models.CharField(verbose_name=_('Name'), max_length=255, blank=True, null=True)
-    aet_title = models.CharField(verbose_name=_('AET Title'), max_length=100)
-    peer_aet_title = models.CharField(verbose_name=_('Peer AET Title'), max_length=100)
-    peer_host = models.CharField(verbose_name=_('Peer Host'), max_length=100)
-    peer_port = models.IntegerField(verbose_name=_('Peer Port'))
-    protocol = models.CharField(verbose_name=_('Protocol Type'), max_length=20, default='DICOMWEB')
+    remote_url = models.CharField(verbose_name=_('Peer URL'), max_length=255)
+    instances_url = models.CharField(verbose_name=_('WADO Instances URL'), default='/instances', max_length=255)
+    instance_file_url = models.CharField(verbose_name=_('WADO Instance Image URL'), default='/instances/{id}/file',
+                                         max_length=255)
 
 
 class ProcessingResult(models.Model):
