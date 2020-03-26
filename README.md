@@ -1,6 +1,6 @@
 # Welcome to NeurDICOM documentation
 
-## Disclaimer for contributions
+## Welcome to everyone
 
 Hello, everyone! I'm very excited that Github's community is interested in my project. Unfortunatly, this project needs improvements in performance and stability. I plan to rewrite some code and replace technologies which I used in first version. It would be great if you bring new fresh idea to enhance application.
 
