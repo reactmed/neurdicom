@@ -2,7 +2,9 @@
 
 ## Welcome to everyone
 
-Hello, everyone! I'm very excited that Github's community is interested in my project. Unfortunatly, this project needs improvements in performance and stability. I plan to rewrite some code and replace technologies which I used in first version. It would be great if you bring new fresh idea to enhance application.
+**Hello, everyone! I'm very excited that Github's community is interested in my project. Unfortunatly, this project needs improvements in performance and stability. I plan to rewrite some code and replace technologies which I used in first version. It would be great if you bring new fresh ideas to enhance application.**
+
+---
 
 NeurDICOM is portable and easy-to-deploy RESTful DICOM and PACS server that allows physicians to use state-of-the-art methods of machine learning and neural networks to make a diagnosis based on medical images processing and interpetating.
 
