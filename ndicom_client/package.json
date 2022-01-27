@@ -23,7 +23,7 @@
     "redux": "^4.0.0",
     "semantic-ui-css": "^2.3.0",
     "semantic-ui-react": "^0.78.2",
-    "three": "^0.91.0"
+    "three": "^0.137.0"
   },
   "scripts": {
     "start": "react-scripts start",
