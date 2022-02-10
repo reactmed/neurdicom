@@ -1,4 +1,4 @@
-Django==2.2.10
+Django==2.2.27
 djangorestframework==3.8.2
 jsonfield==2.0.2
 numpy==1.14.3
