@@ -1,7 +1,7 @@
 Django==2.2.10
 djangorestframework==3.8.2
 jsonfield==2.0.2
-numpy==1.14.3
+numpy==1.22.0
 opencv-python==3.4.1.15
 Pillow==6.2.0
 psycopg2-binary==2.7.4
